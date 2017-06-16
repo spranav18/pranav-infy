@@ -148,7 +148,7 @@ func (t *CrossBorderChainCode) Init(stub shim.ChaincodeStubInterface, function s
 		return nil, errors.New("Error marshalling")
 	}
 	fmt.Println(bytes)
-	err = stub.PutState(key3, bytes)
+	err = stub.PutState(key4, bytes)
 	if err != nil {
 		fmt.Println("Error writing state")
 		return nil, err
