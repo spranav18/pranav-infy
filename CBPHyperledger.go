@@ -201,6 +201,9 @@ func (t *CrossBorderChainCode) Invoke(stub shim.ChaincodeStubInterface, function
 	} else if function == "transfer" {
 		return t.transfer(stub, args)
 	}
+	else if function == "exchangeCurrency" {
+		return t.exchangeCurrency(stub, args)
+	}
 	fmt.Println("invoke did not find func: " + function)
 
 	return nil, errors.New("Received unknown function invocation: " + function)
@@ -259,6 +262,122 @@ func (t *CrossBorderChainCode) write(stub shim.ChaincodeStubInterface, args []st
 		fmt.Println("Error writing state")
 		return nil, err
 	}
+
+	return nil, nil
+}
+
+func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+	fmt.Println("exchangeCurrency is running ")
+
+	if len(args) != 7 {
+		return nil, errors.New("Incorrect Number of arguments.Expecting 7 for exchange currency")
+	}
+	asset1 := args[0] //domestic currency usd or euro
+	asset2 := args[3]  //foreign currency usd or euro
+	exchangeRate,err := strconv.Atoi(args[5])
+	key1 := args[1]  //Entity1 ex: customer
+	key2 := args[2]  //Entity2 ex: exchange counter
+	qty, err := strconv.Atoi(args[4])
+
+	bytes, err := stub.GetState(key1)
+	if err != nil {
+		return nil, errors.New("Failed to get state of " + key1)
+	}
+	if bytes == nil {
+		return nil, errors.New("Entity not found")
+	}
+	customer := Entity{}
+	err = json.Unmarshal(bytes, &customer)
+	if err != nil {
+		fmt.Println("Error Unmarshaling customerBytes")
+		return nil, errors.New("Error Unmarshaling customerBytes")
+	}
+
+	bytes, err = stub.GetState(key2)
+	if err != nil {
+		return nil, errors.New("Failed to get state of " + key2)
+	}
+	if bytes == nil {
+		return nil, errors.New("Entity not found")
+	}
+	exchangeCounter := Entity{}
+	err = json.Unmarshal(bytes, &regulator)
+	if err != nil {
+		fmt.Println("Error Unmarshaling regulatorBytes")
+		return nil, errors.New("Error Unmarshaling regulatorBytes")
+	}
+	bytes, err = stub.GetState(key3)
+	if err != nil {
+		return nil, errors.New("Failed to get state of " + key2)
+	}
+
+		// Perform the transfer
+		if s.Compare(asset1, "usd") == 0 {
+			fmt.Println("usd transfer")
+			//X, err := strconv.Atoi(args[3])
+			if customer.USD >= qty {
+				customer.USD = customer.USD - qty
+				exchangeCounter.USD = exchangeCounter.USD + qty
+				customer.Euro=customer.Euro+(qty*exchangeRate)
+				exchangeCounter.Euro=exchangeCounter.Euro-(qty*exchangeRate)
+				//args[4] = strconv.Itoa(product.Points * qty)
+				fmt.Printf("customer USD = %d, exchangeCounter USD = %d\n", customer.USD, exchangeCounter.USD)
+			} else {
+				return nil, errors.New("Insufficient points to buy goods")
+			}
+		} else {
+			//X, err := strconv.ParseFloat(args[3], 64)
+			if customer.Euro >= float64(qty) {
+				customer.Euro = customer.Euro -float64(qty)
+				exchangeCounter.Euro = exchangeCounter.Euro + float64(qty)
+				customer.USD=customer.USD+(qty*exchangeRate)
+				exchangeCounter.USD=exchangeCounter.USD-(qty*exchangeRate)
+			//	args[4] = strconv.FormatFloat(product.Amount*float64(qty), 'E', -1, 64)
+				fmt.Printf("customer Balance = %f, merchant Balance = %f\n", customer.Balance, merchant.Balance)
+			} else {
+				return nil, errors.New("Insufficient balance to buy goods")
+			}
+		}
+		// Write the customer/entity1 state back to the ledger
+		bytes, err = json.Marshal(customer)
+		if err != nil {
+			fmt.Println("Error marshaling customer")
+			return nil, errors.New("Error marshaling customer")
+		}
+		err = stub.PutState(key1, bytes)
+		if err != nil {
+			return nil, err
+		}
+
+		// Write the exchangeCounter/entity2 state back to the ledger]
+		bytes, err = json.Marshal(merchant)
+		if err != nil {
+			fmt.Println("Error marshaling customer")
+			return nil, errors.New("Error marshaling customer")
+		}
+		err = stub.PutState(key2, bytes)
+		if err != nil {
+			return nil, err
+		}
+		// Write the product state back to the ledger
+		bytes, err = json.Marshal(product)
+		if err != nil {
+			fmt.Println("Error marshaling customer")
+			return nil, errors.New("Error marshaling customer")
+		}
+		err = stub.PutState(key3, bytes)
+		if err != nil {
+			return nil, err
+		}
+
+		args = append(args, stub.GetTxID())
+		blockTime, err := stub.GetTxTimestamp()
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, blockTime.String())
+		t.putTxnGoods(stub, args)
 
 	return nil, nil
 }
