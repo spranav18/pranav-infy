@@ -198,8 +198,7 @@ func (t *CrossBorderChainCode) Invoke(stub shim.ChaincodeStubInterface, function
 		return t.write(stub, args)
 	} else if function == "loadWallet" {
 		return t.loadWallet(stub, args)
-	}
-	else if function == "transfer" {
+	} else if function == "transfer" {
 		return t.transfer(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
@@ -366,16 +365,16 @@ func (t *CrossBorderChainCode) transfer(stub shim.ChaincodeStubInterface, args [
 	if asset == "usd" {
 		amt, err := strconv.Atoi(args[3])
 		if err == nil {
-			fromEntity.Points = fromEntity.Points - amt
-			toEntity.Points = toEntity.Points + amt
-			fmt.Println("from entity Points = ", fromEntity.Points)
+			fromEntity.USD = fromEntity.USD - amt
+			toEntity.USD = toEntity.USD + amt
+			fmt.Println("from entity USD = ", fromEntity.USD)
 		}
 	} else {
 		amt, err := strconv.ParseFloat(args[3], 64)
 		if err == nil {
-			fromEntity.Balance = fromEntity.Balance - amt
-			toEntity.Balance = toEntity.Balance + amt
-			fmt.Println("from entity Points = ", fromEntity.Points)
+			fromEntity.Euro = fromEntity.Euro - amt
+			toEntity.Euro = toEntity.Euro + amt
+			fmt.Println("from entity Euro = ", fromEntity.Euro)
 		}
 	}
 
@@ -404,7 +403,7 @@ func (t *CrossBorderChainCode) transfer(stub shim.ChaincodeStubInterface, args [
 	blockTime, err := stub.GetTxTimestamp()
 	args = append(args, ID)
 	args = append(args, blockTime.String())
-	t.putTxnTransfer(stub, args)
+	//t.putTxnTransfer(stub, args)
 
 	return nil, nil
 }
