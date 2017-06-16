@@ -16,7 +16,7 @@ type Entity struct {
 	Type string  `json:"type"`
 	Name string  `json:"name"`
 	Euro float64 `json:"euroBalance"`
-	USD  int     `json:"usdBalance"`
+	USD  float64 `json:"usdBalance"`
 }
 
 //TxnTopup - User transactions for adding USD or Euro
@@ -79,8 +79,8 @@ func (t *CrossBorderChainCode) Init(stub shim.ChaincodeStubInterface, function s
 	cust := Entity{
 		Type: "customer",
 		Name: key1,
-		USD:  3000,
-		Euro: 3000,
+		USD:  3000.00,
+		Euro: 3000.00,
 	}
 
 	fmt.Println(cust)
@@ -99,8 +99,8 @@ func (t *CrossBorderChainCode) Init(stub shim.ChaincodeStubInterface, function s
 	regulator := Entity{
 		Type: "regulator",
 		Name: key2,
-		USD:  6000,
-		Euro: 6000,
+		USD:  6000.00,
+		Euro: 6000.00,
 	}
 	fmt.Println(regulator)
 	bytes, err = json.Marshal(regulator)
@@ -118,8 +118,8 @@ func (t *CrossBorderChainCode) Init(stub shim.ChaincodeStubInterface, function s
 	bank := Entity{
 		Type: "receivingBank",
 		Name: key3,
-		USD:  10000,
-		Euro: 10000,
+		USD:  10000.00,
+		Euro: 10000.00,
 	}
 	fmt.Println(bank)
 	bytes, err = json.Marshal(bank)
@@ -137,8 +137,8 @@ func (t *CrossBorderChainCode) Init(stub shim.ChaincodeStubInterface, function s
 	exchangeCounter := Entity{
 		Type: "exchangeCounter",
 		Name: key4,
-		USD:  10000,
-		Euro: 10000,
+		USD:  10000.00,
+		Euro: 10000.00,
 	}
 	fmt.Println(exchangeCounter)
 	bytes, err = json.Marshal(exchangeCounter)
@@ -200,8 +200,7 @@ func (t *CrossBorderChainCode) Invoke(stub shim.ChaincodeStubInterface, function
 		return t.loadWallet(stub, args)
 	} else if function == "transfer" {
 		return t.transfer(stub, args)
-	}
-	else if function == "exchangeCurrency" {
+	} else if function == "exchangeCurrency" {
 		return t.exchangeCurrency(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
@@ -241,7 +240,7 @@ func (t *CrossBorderChainCode) write(stub shim.ChaincodeStubInterface, args []st
 	typeOf := args[0]
 	name := args[1]
 	euro, err := strconv.ParseFloat(args[2], 64)
-	usd, err := strconv.Atoi(args[3])
+	usd, err := strconv.ParseFloat(args[3],64)
 
 	entity := Entity{
 		Type: typeOf,
@@ -275,10 +274,10 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 	}
 	asset1 := args[0] //domestic currency usd or euro
 	asset2 := args[3]  //foreign currency usd or euro
-	exchangeRate,err := strconv.Atoi(args[5])
+	exchangeRate,err := strconv.ParseFloat(args[5],64)
 	key1 := args[1]  //Entity1 ex: customer
 	key2 := args[2]  //Entity2 ex: exchange counter
-	qty, err := strconv.Atoi(args[4])
+	qty, err := strconv.ParseFloat(args[4],64)
 
 	bytes, err := stub.GetState(key1)
 	if err != nil {
@@ -302,20 +301,15 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 		return nil, errors.New("Entity not found")
 	}
 	exchangeCounter := Entity{}
-	err = json.Unmarshal(bytes, &regulator)
+	err = json.Unmarshal(bytes, &exchangeCounter)
 	if err != nil {
-		fmt.Println("Error Unmarshaling regulatorBytes")
-		return nil, errors.New("Error Unmarshaling regulatorBytes")
-	}
-	bytes, err = stub.GetState(key3)
-	if err != nil {
-		return nil, errors.New("Failed to get state of " + key2)
+		fmt.Println("Error Unmarshaling exchangeCounterBytes")
+		return nil, errors.New("Error Unmarshaling exchangeCounterBytes")
 	}
 
 		// Perform the transfer
-		if s.Compare(asset1, "usd") == 0 {
+		if asset1=="usd" {
 			fmt.Println("usd transfer")
-			//X, err := strconv.Atoi(args[3])
 			if customer.USD >= qty {
 				customer.USD = customer.USD - qty
 				exchangeCounter.USD = exchangeCounter.USD + qty
@@ -327,14 +321,13 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 				return nil, errors.New("Insufficient points to buy goods")
 			}
 		} else {
-			//X, err := strconv.ParseFloat(args[3], 64)
-			if customer.Euro >= float64(qty) {
-				customer.Euro = customer.Euro -float64(qty)
-				exchangeCounter.Euro = exchangeCounter.Euro + float64(qty)
+			if customer.Euro >= qty {
+				customer.Euro = customer.Euro -qty
+				exchangeCounter.Euro = exchangeCounter.Euro + qty
 				customer.USD=customer.USD+(qty*exchangeRate)
 				exchangeCounter.USD=exchangeCounter.USD-(qty*exchangeRate)
 			//	args[4] = strconv.FormatFloat(product.Amount*float64(qty), 'E', -1, 64)
-				fmt.Printf("customer Balance = %f, merchant Balance = %f\n", customer.Balance, merchant.Balance)
+				fmt.Printf("customer Euro = %f, exchangeCounter Euro = %f\n", customer.Euro, exchangeCounter.Euro)
 			} else {
 				return nil, errors.New("Insufficient balance to buy goods")
 			}
@@ -351,33 +344,24 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 		}
 
 		// Write the exchangeCounter/entity2 state back to the ledger]
-		bytes, err = json.Marshal(merchant)
+		bytes, err = json.Marshal(exchangeCounter)
 		if err != nil {
-			fmt.Println("Error marshaling customer")
-			return nil, errors.New("Error marshaling customer")
+			fmt.Println("Error marshaling exchangeCounter")
+			return nil, errors.New("Error marshaling exchangeCounter")
 		}
 		err = stub.PutState(key2, bytes)
 		if err != nil {
 			return nil, err
 		}
 		// Write the product state back to the ledger
-		bytes, err = json.Marshal(product)
-		if err != nil {
-			fmt.Println("Error marshaling customer")
-			return nil, errors.New("Error marshaling customer")
-		}
-		err = stub.PutState(key3, bytes)
-		if err != nil {
-			return nil, err
-		}
-
+	
 		args = append(args, stub.GetTxID())
 		blockTime, err := stub.GetTxTimestamp()
 		if err != nil {
 			return nil, err
 		}
 		args = append(args, blockTime.String())
-		t.putTxnGoods(stub, args)
+	//	t.putTxnGoods(stub, args)
 
 	return nil, nil
 }
@@ -409,7 +393,7 @@ func (t *CrossBorderChainCode) loadWallet(stub shim.ChaincodeStubInterface, args
 
 	// Perform the addition of assests
 	if asset == "usd" {
-		amt, err := strconv.Atoi(args[2])
+		amt, err := strconv.ParseFloat(args[2],64)
 		if err == nil {
 			entity.USD = entity.USD + amt
 			fmt.Println("entity USD Balance = ", entity.USD)
@@ -482,7 +466,7 @@ func (t *CrossBorderChainCode) transfer(stub shim.ChaincodeStubInterface, args [
 
 	// Perform transfer of assests
 	if asset == "usd" {
-		amt, err := strconv.Atoi(args[3])
+		amt, err := strconv.ParseFloat(args[3],64)
 		if err == nil {
 			fromEntity.USD = fromEntity.USD - amt
 			toEntity.USD = toEntity.USD + amt
