@@ -198,6 +198,7 @@ func (t *CrossBorderChainCode) Invoke(stub shim.ChaincodeStubInterface, function
 		return t.write(stub, args)
 	} else if function == "add" {
 		return t.add(stub, args)
+	}
 	fmt.Println("invoke did not find func: " + function)
 
 	return nil, errors.New("Received unknown function invocation: " + function)
