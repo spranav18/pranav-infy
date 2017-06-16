@@ -67,8 +67,8 @@ func main() {
 // Init resets all the things
 func (t *CrossBorderChainCode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
-	if len(args) != 3 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 3")
+	if len(args) != 4 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 4")
 	}
 
 	key1 := args[0] //customer
