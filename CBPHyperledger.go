@@ -327,8 +327,8 @@ func (t *CrossBorderChainCode) transfer(stub shim.ChaincodeStubInterface, args [
 
 	fmt.Println("transfer is running ")
 
-	if len(args) != 5 {
-		return nil, errors.New("Incorrect Number of arguments.Expecting 5 for transfer")
+	if len(args) != 4 {
+		return nil, errors.New("Incorrect Number of arguments.Expecting 4 for transfer")
 	}
 
 	key1 := args[0]   // fromEntity ex: customer
