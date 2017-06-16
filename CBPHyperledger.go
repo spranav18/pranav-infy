@@ -196,8 +196,13 @@ func (t *CrossBorderChainCode) Invoke(stub shim.ChaincodeStubInterface, function
 		return t.Init(stub, "init", args)
 	} else if function == "write" {
 		return t.write(stub, args)
+	} else if function == "exchangeCurrency" {
+		return t.exchangeCurrency(stub, args)
+	} else if function == "add" {
+		return t.add(stub, args)
+	} else if function == "transfer" {
+		return t.transfer(stub, args)
 	}
-
 	fmt.Println("invoke did not find func: " + function)
 
 	return nil, errors.New("Received unknown function invocation: " + function)
@@ -256,6 +261,66 @@ func (t *CrossBorderChainCode) write(stub shim.ChaincodeStubInterface, args []st
 		fmt.Println("Error writing state")
 		return nil, err
 	}
+
+	return nil, nil
+}
+
+func (t *CrossBorderChainCode) add(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+	fmt.Println("add is running ")
+
+	if len(args) != 3 {
+		return nil, errors.New("Incorrect Number of arguments.Expecting 3 for add")
+	}
+
+	asset := args[0] //points or balance
+	key := args[1]   //Entity ex: customer
+	//amt, err := strconv.Atoi(args[1]) // points to be issued
+
+	// GET the state of entity from the ledger
+	bytes, err := stub.GetState(key)
+	if err != nil {
+		return nil, errors.New("Failed to get state of " + key)
+	}
+
+	entity := Entity{}
+	err = json.Unmarshal(bytes, &entity)
+	if err != nil {
+		fmt.Println("Error Unmarshaling entity Bytes")
+		return nil, errors.New("Error Unmarshaling entity Bytes")
+	}
+
+	// Perform the addition of assests
+	if asset == "usd" {
+		amt, err := strconv.Atoi(args[2])
+		if err == nil {
+			entity.usdBalance = entity.usdBalance + amt
+			fmt.Println("entity USD Balance = ", entity.usdBalance)
+		}
+	} else {
+		amt, err := strconv.ParseFloat(args[2], 64)
+		if err == nil {
+			entity.euroBalance = entity.euroBalance + amt
+			fmt.Println("entity Euro Balance = ", entity.euroBalance)
+		}
+	}
+
+	// Write the state back to the ledger
+	bytes, err = json.Marshal(entity)
+	if err != nil {
+		fmt.Println("Error marshaling entity")
+		return nil, errors.New("Error marshaling entity")
+	}
+	err = stub.PutState(key, bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	ID := stub.GetTxID()
+	blockTime, err := stub.GetTxTimestamp()
+	args = append(args, ID)
+	args = append(args, blockTime.String())
+	t.putTxnTopup(stub, args)
 
 	return nil, nil
 }
