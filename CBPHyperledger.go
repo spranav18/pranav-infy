@@ -196,13 +196,8 @@ func (t *CrossBorderChainCode) Invoke(stub shim.ChaincodeStubInterface, function
 		return t.Init(stub, "init", args)
 	} else if function == "write" {
 		return t.write(stub, args)
-	} else if function == "exchangeCurrency" {
-		return t.exchangeCurrency(stub, args)
 	} else if function == "add" {
 		return t.add(stub, args)
-	} else if function == "transfer" {
-		return t.transfer(stub, args)
-	}
 	fmt.Println("invoke did not find func: " + function)
 
 	return nil, errors.New("Received unknown function invocation: " + function)
@@ -275,7 +270,7 @@ func (t *CrossBorderChainCode) add(stub shim.ChaincodeStubInterface, args []stri
 
 	asset := args[0] //points or balance
 	key := args[1]   //Entity ex: customer
-	//amt, err := strconv.Atoi(args[1]) // points to be issued
+	//amt, err := strconv.Atoi(args[2]) // points to be issued
 
 	// GET the state of entity from the ledger
 	bytes, err := stub.GetState(key)
