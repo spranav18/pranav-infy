@@ -273,7 +273,7 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 		return nil, errors.New("Incorrect Number of arguments.Expecting 7 for exchange currency")
 	}
 	asset1 := args[0] //domestic currency usd or euro
-	asset2 := args[3]  //foreign currency usd or euro
+	//asset2 := args[3]  //foreign currency usd or euro
 	exchangeRate,err := strconv.ParseFloat(args[5],64)
 	key1 := args[1]  //Entity1 ex: customer
 	key2 := args[2]  //Entity2 ex: exchange counter
