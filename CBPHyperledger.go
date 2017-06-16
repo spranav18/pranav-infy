@@ -290,14 +290,14 @@ func (t *CrossBorderChainCode) add(stub shim.ChaincodeStubInterface, args []stri
 	if asset == "usd" {
 		amt, err := strconv.Atoi(args[2])
 		if err == nil {
-			entity.usdBalance = entity.usdBalance + amt
-			fmt.Println("entity USD Balance = ", entity.usdBalance)
+			entity.USD = entity.USD + amt
+			fmt.Println("entity USD Balance = ", entity.USD)
 		}
 	} else {
 		amt, err := strconv.ParseFloat(args[2], 64)
 		if err == nil {
-			entity.euroBalance = entity.euroBalance + amt
-			fmt.Println("entity Euro Balance = ", entity.euroBalance)
+			entity.Euro = entity.Euro + amt
+			fmt.Println("entity Euro Balance = ", entity.Euro)
 		}
 	}
 
