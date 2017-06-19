@@ -221,7 +221,9 @@ func (t *CrossBorderChainCode) Query(stub shim.ChaincodeStubInterface, function 
 	} else if function == "getAllTxnTopup" {
 		return t.getAllTxnTopup(stub)
 	} else if function == "getAllTxnExchange" {
-		return nil, nil //t.getAllTxnExchange(stub)
+		return nil, nil //t.getAllTxnExchange(stub)    
+	} else if function == "getAllTxnTransfer" {
+		return t.getAllTxnTransfer(stub)
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -507,7 +509,7 @@ func (t *CrossBorderChainCode) transfer(stub shim.ChaincodeStubInterface, args [
 	blockTime, err := stub.GetTxTimestamp()
 	args = append(args, ID)
 	args = append(args, blockTime.String())
-	//t.putTxnTransfer(stub, args)
+	t.putTxnTransfer(stub, args)
 
 	return nil, nil
 }
@@ -683,6 +685,77 @@ func (t *CrossBorderChainCode) getAllTxnExchange(stub shim.ChaincodeStubInterfac
 	if err != nil {
 		fmt.Println("Error marshaling txns TxnExchange")
 		return nil, errors.New("Error marshaling txns TxnExchange")
+	}
+	return bytes, nil
+}
+
+func (t *CrossBorderChainCode) putTxnTransfer(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("putTxnTransfer is running ")
+
+	if len(args) != 7 {
+		return nil, errors.New("Incorrect Number of arguments.Expecting 8 for putTxnTransfer")
+	}
+	txn := TxnTransfer{
+		Sender:   args[0],
+		Receiver: args[1],
+		Remarks:  args[4],
+		ID:       args[5],
+		Time:     args[6],
+		Value:    args[3],
+		Asset:    args[2],
+	}
+
+	bytes, err := json.Marshal(txn)
+	if err != nil {
+		fmt.Println("Error marshaling TxnTransfer")
+		return nil, errors.New("Error marshaling TxnTransfer")
+	}
+
+	err = stub.PutState(txn.ID, bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return t.appendKey(stub, "TxnTransfer", txn.ID)
+}
+
+func (t *CrossBorderChainCode) getAllTxnTransfer(stub shim.ChaincodeStubInterface) ([]byte, error) {
+	fmt.Println("getAllTxnTransfer is running ")
+
+	var txns []TxnTransfer
+
+	// Get list of all the keys - TxnGoods
+	keysBytes, err := stub.GetState("TxnTransfer")
+	if err != nil {
+		fmt.Println("Error retrieving TxnTransfer keys")
+		return nil, errors.New("Error retrieving TxnTransfer keys")
+	}
+	var keys []string
+	err = json.Unmarshal(keysBytes, &keys)
+	if err != nil {
+		fmt.Println("Error unmarshalling TxnTransfer key")
+		return nil, errors.New("Error unmarshalling TxnTransfer keys")
+	}
+
+	// Get each txn from "TxnTransfer" keys
+	for _, value := range keys {
+		bytes, err := stub.GetState(value)
+
+		var txn TxnTransfer
+		err = json.Unmarshal(bytes, &txn)
+		if err != nil {
+			fmt.Println("Error retrieving txn " + value)
+			return nil, errors.New("Error retrieving txn " + value)
+		}
+
+		fmt.Println("Appending txn goods details " + value)
+		txns = append(txns, txn)
+	}
+
+	bytes, err := json.Marshal(txns)
+	if err != nil {
+		fmt.Println("Error marshaling txns TxnTransfer")
+		return nil, errors.New("Error marshaling txns TxnTransfer")
 	}
 	return bytes, nil
 }
