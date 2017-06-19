@@ -41,16 +41,17 @@ type TxnTransfer struct {
 }
 
 //ExchangeCurrency - User transaction details for currency exchange
-type ExchangeCurrency struct {
-	Sender    string `json:"sender"`
-	Receiver  string `json:"receiver"`
-	Remarks   string `json:"remarks"`
-	ID        string `json:"id"`
-	Time      string `json:"time"`
-	ValueFrom string `json:"valueFrom"`
-	AssetFrom string `json:"assetFrom"`
-	ValueTo   string `json:"valueTo"`
-	AssetTo   string `json:"assetTo"`
+type TxnExchange struct {
+	Initiator    string `json:"initiator"`
+	Convertor    string `json:"convertor"`
+	SellCurrency string `json:"sellCurrency"`
+	SellQuantity string `json:"sellQuantity"`
+	BuyCurrency  string `json:"buyCurrency"`
+	BuyQuantity  string `json:"buyQuantity"`
+	ExchangeRate string `json:"exchangeRate"`
+	Remarks      string `json:"remarks"`
+	ID           string `json:"id"`
+	Time         string `json:"time"`
 }
 
 // CrossBorderChainCode example simple Chaincode implementation
@@ -306,15 +307,15 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 		fmt.Println("Error Unmarshaling exchangeCounterBytes")
 		return nil, errors.New("Error Unmarshaling exchangeCounterBytes")
 	}
-
+	sellQuantity:=qty*exchangeRate
 		// Perform the transfer
 		if asset1=="usd" {
 			fmt.Println("usd transfer")
 			if customer.USD >= qty {
 				customer.USD = customer.USD - qty
 				exchangeCounter.USD = exchangeCounter.USD + qty
-				customer.Euro=customer.Euro+(qty*exchangeRate)
-				exchangeCounter.Euro=exchangeCounter.Euro-(qty*exchangeRate)
+				customer.Euro=customer.Euro+sellQuantity
+				exchangeCounter.Euro=exchangeCounter.Euro-sellQuantity
 				//args[4] = strconv.Itoa(product.Points * qty)
 				fmt.Printf("customer USD = %d, exchangeCounter USD = %d\n", customer.USD, exchangeCounter.USD)
 			} else {
@@ -324,8 +325,8 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 			if customer.Euro >= qty {
 				customer.Euro = customer.Euro -qty
 				exchangeCounter.Euro = exchangeCounter.Euro + qty
-				customer.USD=customer.USD+(qty*exchangeRate)
-				exchangeCounter.USD=exchangeCounter.USD-(qty*exchangeRate)
+				customer.USD=customer.USD+sellQuantity
+				exchangeCounter.USD=exchangeCounter.USD-sellQuantity
 			//	args[4] = strconv.FormatFloat(product.Amount*float64(qty), 'E', -1, 64)
 				fmt.Printf("customer Euro = %f, exchangeCounter Euro = %f\n", customer.Euro, exchangeCounter.Euro)
 			} else {
@@ -354,14 +355,14 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 			return nil, err
 		}
 		// Write the product state back to the ledger
-	
+		args=append(args,fmt.Sprintf("%.6f", sellQuantity))
 		args = append(args, stub.GetTxID())
 		blockTime, err := stub.GetTxTimestamp()
 		if err != nil {
 			return nil, err
 		}
 		args = append(args, blockTime.String())
-	//	t.putTxnGoods(stub, args)
+	//	t.putTxnExchange(stub, args)
 
 	return nil, nil
 }
@@ -374,7 +375,7 @@ func (t *CrossBorderChainCode) loadWallet(stub shim.ChaincodeStubInterface, args
 		return nil, errors.New("Incorrect Number of arguments.Expecting 3 for loadWallet")
 	}
 
-	asset := args[0] //points or balance
+	asset := args[0] //usd or euro
 	key := args[1]   //Entity ex: customer
 	//amt, err := strconv.Atoi(args[2]) // points to be issued
 
@@ -611,6 +612,40 @@ func (t *CrossBorderChainCode) getAllTxnTopup(stub shim.ChaincodeStubInterface) 
 	}
 	return bytes, nil
 }
+
+func (t *CrossBorderChainCode) putTxnExchange(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("putTxnGoods is running ")
+
+	if len(args) != 10 {
+		return nil, errors.New("Incorrect Number of arguments.Expecting 10 for putTxnGoods")
+	}
+	txn := TxnExchange{
+		Initiator:    args[3],
+		Convertor:    args[4],
+		SellCurrency: args[0],
+		SellQuantity: args[5],
+		BuyCurrency:  args[1],
+		BuyQuantity:  args[5],
+		ExchangeRate: args[2],
+		Remarks:      args[6] + " - " + args[5],
+		ID:           args[8],
+		Time:         args[9],
+	}
+
+	bytes, err := json.Marshal(txn)
+	if err != nil {
+		fmt.Println("Error marshaling TxnGoods")
+		return nil, errors.New("Error marshaling TxnGoods")
+	}
+
+	err = stub.PutState(txn.ID, bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return t.appendKey(stub, "TxnExchange", txn.ID)
+}
+
 func (t *CrossBorderChainCode) appendKey(stub shim.ChaincodeStubInterface, primeKey string, key string) ([]byte, error) {
 	fmt.Println("appendKey is running " + primeKey + " " + key)
 
