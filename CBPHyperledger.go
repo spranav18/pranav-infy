@@ -167,15 +167,15 @@ func (t *CrossBorderChainCode) Init(stub shim.ChaincodeStubInterface, function s
 	if err != nil {
 		return nil, err
 		}
-	asset := Assets{
+	assets := Assets{
 		Asset1: "USD",
 		Asset2: "Euro",
 		ExchangeRate:  0.5,
 		Time :blockTime.String(),
 	}
 	
-	fmt.Println(asset)
-	bytes, err = json.Marshal(asset)
+	fmt.Println(assets)
+	bytes, err = json.Marshal(assets)
 
 	if err != nil {
 		fmt.Println("Error marsalling")
@@ -191,7 +191,6 @@ func (t *CrossBorderChainCode) Init(stub shim.ChaincodeStubInterface, function s
 	// Initialize the collection of  keys for assets and various transactions
 	fmt.Println("Initializing keys collection")
 	var blank []string
-
 
 	blankBytes, _ := json.Marshal(&blank)
 
@@ -787,9 +786,9 @@ func (t *CrossBorderChainCode) getAllTxnTransfer(stub shim.ChaincodeStubInterfac
 }
 
 func (t *CrossBorderChainCode) getAllCurrencies(stub shim.ChaincodeStubInterface) ([]byte, error) {
-	fmt.Println("getAllTxnTransfer is running ")
+	fmt.Println("getAllCurrencies is running ")
 
-	var txns []Assets
+	var assets []Assets
 
 	// Get list of all the keys - Assets
 	keysBytes, err := stub.GetState("Assets")
@@ -816,13 +815,13 @@ func (t *CrossBorderChainCode) getAllCurrencies(stub shim.ChaincodeStubInterface
 		}
 
 		fmt.Println("Appending asset details " + value)
-		txns = append(txns, txn)
+		assets = append(assets, txn)
 	}
 
-	bytes, err := json.Marshal(txns)
+	bytes, err := json.Marshal(assets)
 	if err != nil {
-		fmt.Println("Error marshaling txns Assets")
-		return nil, errors.New("Error marshaling txns Assets")
+		fmt.Println("Error marshaling assets Assets")
+		return nil, errors.New("Error marshaling assets Assets")
 	}
 	return bytes, nil
 }
