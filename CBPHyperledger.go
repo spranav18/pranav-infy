@@ -223,7 +223,7 @@ func (t *CrossBorderChainCode) Invoke(stub shim.ChaincodeStubInterface, function
 	} else if function == "requestTransfer" {
 		return t.requestTransfer(stub, args)
 	} else if function == "approve" {
-		return t.requestTransfer(stub, args)
+		return t.approve(stub, args)
 	} else if function == "transfer" {
 		return t.transfer(stub, args)
 	} else if function == "exchangeCurrency" {
@@ -318,12 +318,12 @@ func (t *CrossBorderChainCode) requestTransfer(stub shim.ChaincodeStubInterface,
 		return nil, errors.New("Error marshaling requestTransfer")
 	}
 
-	err = stub.PutState(args[0], bytes)
+	err = stub.PutState(txn.ID, bytes)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil,nil
+	return t.appendKey(stub, "TxnTransfer", txn.ID)
 }
 
 func (t *CrossBorderChainCode) approve(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -350,12 +350,12 @@ func (t *CrossBorderChainCode) approve(stub shim.ChaincodeStubInterface, args []
 		return nil, errors.New("Error marshaling requestTransfer")
 	}
 
-	err = stub.PutState("Regulator", bytes)
+	err = stub.PutState(txn.ID, bytes)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil,nil
+	return t.appendKey(stub, "TxnTransfer", txn.ID)
 }
 
 func (t *CrossBorderChainCode) transfer(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
