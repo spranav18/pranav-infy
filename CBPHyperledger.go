@@ -287,6 +287,157 @@ func (t *CrossBorderChainCode) write(stub shim.ChaincodeStubInterface, args []st
 	return nil, nil
 }
 
+
+func (t *CrossBorderChainCode) requestTransfer(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+	if len(args) != 5 {
+		return nil, errors.New("Incorrect Number of arguments.Expecting 5 for transfer")
+	}
+	blockTime, err := stub.GetTxTimestamp()
+
+	i++
+	key := "transfer" + strconv.Itoa(i)
+	
+	txn := TxnTransfer{
+		Sender:   args[0],
+		Receiver: args[1],
+		Remarks:  args[4],
+		ID:       stub.GetTxID(),
+		Time:     blockTime.String(),
+		Value:    args[3],
+		Asset:    args[2],
+	}
+
+	bytes, err := json.Marshal(txn)
+	if err != nil {
+		fmt.Println("Error marshaling requestTransfer")
+		return nil, errors.New("Error marshaling requestTransfer")
+	}
+
+	err = stub.PutState(key, bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return t.appendKey(stub, "TxnTransfer", key)
+}
+
+func (t *CrossBorderChainCode) transfer(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+	fmt.Println("transfer is running ")
+
+	if len(args) != 5 {
+		return nil, errors.New("Incorrect Number of arguments.Expecting 5 for transfer")
+	}
+
+	key1 := args[0]   // fromEntity ex: customer
+	key2 := args[1]  // toEntity ex: merchant
+	asset := args[2] // usd or euro
+
+	// GET the state of fromEntity from the ledger
+	bytes, err := stub.GetState(key1)
+	if err != nil {
+		return nil, errors.New("Failed to get state of " + key1)
+	}
+
+	fromEntity := Entity{}
+	err = json.Unmarshal(bytes, &fromEntity)
+	if err != nil {
+		fmt.Println("Error Unmarshaling entity Bytes")
+		return nil, errors.New("Error Unmarshaling entity Bytes")
+	}
+
+	// GET the state of toEntity from the ledger
+	bytes, err = stub.GetState(key2)
+	if err != nil {
+		return nil, errors.New("Failed to get state of " + key2)
+	}
+
+	toEntity := Entity{}
+	err = json.Unmarshal(bytes, &toEntity)
+	if err != nil {
+		fmt.Println("Error Unmarshaling entity Bytes")
+		return nil, errors.New("Error Unmarshaling entity Bytes")
+	}
+
+	// Perform transfer of assests
+	if asset == "usd" {
+		amt, err := strconv.ParseFloat(args[3],64)
+		if err == nil {
+			fromEntity.USD = fromEntity.USD - amt
+			toEntity.USD = toEntity.USD + amt
+			fmt.Println("from entity USD = ", fromEntity.USD)
+		}
+	} else {
+		amt, err := strconv.ParseFloat(args[3], 64)
+		if err == nil {
+			fromEntity.Euro = fromEntity.Euro - amt
+			toEntity.Euro = toEntity.Euro + amt
+			fmt.Println("from entity Euro = ", fromEntity.Euro)
+		}
+	}
+
+	// Write the state back to the ledger
+	bytes, err = json.Marshal(fromEntity)
+	if err != nil {
+		fmt.Println("Error marshaling fromEntity")
+		return nil, errors.New("Error marshaling fromEntity")
+	}
+	err = stub.PutState(key1, bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	bytes, err = json.Marshal(toEntity)
+	if err != nil {
+		fmt.Println("Error marshaling toEntity")
+		return nil, errors.New("Error marshaling toEntity")
+	}
+	err = stub.PutState(key2, bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	ID := stub.GetTxID()
+	blockTime, err := stub.GetTxTimestamp()
+	args = append(args, ID)
+	args = append(args, blockTime.String())
+	t.putTxnTransfer(stub, args)
+
+	return nil, nil
+}
+
+// read - query function to read key/value pair
+func (t *CrossBorderChainCode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("read() is running")
+
+	if len(args) != 1 {
+		return nil, errors.New("Incorrect number of arguments. expecting 1")
+	}
+
+	key := args[0] // name of Entity
+
+	bytes, err := stub.GetState(key)
+	if err != nil {
+		fmt.Println("Error retrieving " + key)
+		return nil, errors.New("Error retrieving " + key)
+	}
+	entity := Entity{}
+	err = json.Unmarshal(bytes, &entity)
+	if err != nil {
+		fmt.Println("Error Unmarshaling entityBytes")
+		return nil, errors.New("Error Unmarshaling entityBytes")
+	}
+	bytes, err = json.Marshal(entity)
+	if err != nil {
+		fmt.Println("Error marshaling entity")
+		return nil, errors.New("Error marshaling entity")
+	}
+
+	fmt.Println(bytes)
+	return bytes, nil
+}
+
 func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 	fmt.Println("exchangeCurrency is running ")
@@ -446,122 +597,6 @@ func (t *CrossBorderChainCode) loadWallet(stub shim.ChaincodeStubInterface, args
 	t.putTxnTopup(stub, args)
 
 	return nil, nil
-}
-
-func (t *CrossBorderChainCode) transfer(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-
-	fmt.Println("transfer is running ")
-
-	if len(args) != 5 {
-		return nil, errors.New("Incorrect Number of arguments.Expecting 5 for transfer")
-	}
-
-	key1 := args[0]   // fromEntity ex: customer
-	key2 := args[1]  // toEntity ex: merchant
-	asset := args[2] // usd or euro
-
-	// GET the state of fromEntity from the ledger
-	bytes, err := stub.GetState(key1)
-	if err != nil {
-		return nil, errors.New("Failed to get state of " + key1)
-	}
-
-	fromEntity := Entity{}
-	err = json.Unmarshal(bytes, &fromEntity)
-	if err != nil {
-		fmt.Println("Error Unmarshaling entity Bytes")
-		return nil, errors.New("Error Unmarshaling entity Bytes")
-	}
-
-	// GET the state of toEntity from the ledger
-	bytes, err = stub.GetState(key2)
-	if err != nil {
-		return nil, errors.New("Failed to get state of " + key2)
-	}
-
-	toEntity := Entity{}
-	err = json.Unmarshal(bytes, &toEntity)
-	if err != nil {
-		fmt.Println("Error Unmarshaling entity Bytes")
-		return nil, errors.New("Error Unmarshaling entity Bytes")
-	}
-
-	// Perform transfer of assests
-	if asset == "usd" {
-		amt, err := strconv.ParseFloat(args[3],64)
-		if err == nil {
-			fromEntity.USD = fromEntity.USD - amt
-			toEntity.USD = toEntity.USD + amt
-			fmt.Println("from entity USD = ", fromEntity.USD)
-		}
-	} else {
-		amt, err := strconv.ParseFloat(args[3], 64)
-		if err == nil {
-			fromEntity.Euro = fromEntity.Euro - amt
-			toEntity.Euro = toEntity.Euro + amt
-			fmt.Println("from entity Euro = ", fromEntity.Euro)
-		}
-	}
-
-	// Write the state back to the ledger
-	bytes, err = json.Marshal(fromEntity)
-	if err != nil {
-		fmt.Println("Error marshaling fromEntity")
-		return nil, errors.New("Error marshaling fromEntity")
-	}
-	err = stub.PutState(key1, bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	bytes, err = json.Marshal(toEntity)
-	if err != nil {
-		fmt.Println("Error marshaling toEntity")
-		return nil, errors.New("Error marshaling toEntity")
-	}
-	err = stub.PutState(key2, bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	ID := stub.GetTxID()
-	blockTime, err := stub.GetTxTimestamp()
-	args = append(args, ID)
-	args = append(args, blockTime.String())
-	t.putTxnTransfer(stub, args)
-
-	return nil, nil
-}
-
-// read - query function to read key/value pair
-func (t *CrossBorderChainCode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	fmt.Println("read() is running")
-
-	if len(args) != 1 {
-		return nil, errors.New("Incorrect number of arguments. expecting 1")
-	}
-
-	key := args[0] // name of Entity
-
-	bytes, err := stub.GetState(key)
-	if err != nil {
-		fmt.Println("Error retrieving " + key)
-		return nil, errors.New("Error retrieving " + key)
-	}
-	entity := Entity{}
-	err = json.Unmarshal(bytes, &entity)
-	if err != nil {
-		fmt.Println("Error Unmarshaling entityBytes")
-		return nil, errors.New("Error Unmarshaling entityBytes")
-	}
-	bytes, err = json.Marshal(entity)
-	if err != nil {
-		fmt.Println("Error marshaling entity")
-		return nil, errors.New("Error marshaling entity")
-	}
-
-	fmt.Println(bytes)
-	return bytes, nil
 }
 
 func (t *CrossBorderChainCode) putTxnTopup(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
