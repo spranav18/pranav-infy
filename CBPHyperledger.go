@@ -173,9 +173,9 @@ func (t *CrossBorderChainCode) Init(stub shim.ChaincodeStubInterface, function s
 	if err != nil {
 		fmt.Println("Failed to initialize TxnTopUp key collection")
 	}
-	err = stub.PutState("ExchangeCurrency", blankBytes)
+	err = stub.PutState("TxnExchange", blankBytes)
 	if err != nil {
-		fmt.Println("Failed to initialize ExchangeCurrency key collection")
+		fmt.Println("Failed to initialize TxnExchange key collection")
 	}
 
 	err = stub.PutState("TxnTransfer", blankBytes)
@@ -616,10 +616,10 @@ func (t *CrossBorderChainCode) getAllTxnTopup(stub shim.ChaincodeStubInterface) 
 }
 
 func (t *CrossBorderChainCode) putTxnExchange(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	fmt.Println("putTxnGoods is running ")
+	fmt.Println("putTxnExchange is running ")
 
 	if len(args) != 10 {
-		return nil, errors.New("Incorrect Number of arguments.Expecting 10 for putTxnGoods")
+		return nil, errors.New("Incorrect Number of arguments.Expecting 10 for putTxnExchange")
 	}
 	txn := TxnExchange{
 		Initiator:    args[3],
@@ -724,7 +724,7 @@ func (t *CrossBorderChainCode) getAllTxnTransfer(stub shim.ChaincodeStubInterfac
 
 	var txns []TxnTransfer
 
-	// Get list of all the keys - TxnGoods
+	// Get list of all the keys - TxnTransfer
 	keysBytes, err := stub.GetState("TxnTransfer")
 	if err != nil {
 		fmt.Println("Error retrieving TxnTransfer keys")
