@@ -220,8 +220,8 @@ func (t *CrossBorderChainCode) Query(stub shim.ChaincodeStubInterface, function 
 		return nil, nil //t.getAllCurrencies(stub)
 	} else if function == "getAllTxnTopup" {
 		return t.getAllTxnTopup(stub)
-	} else if function == "getAllExchangeRecords" {
-		return nil, nil //t.getAllExchangeRecords(stub)
+	} else if function == "getAllTxnExchange" {
+		return nil, nil //t.getAllTxnExchange(stub)
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -644,6 +644,47 @@ func (t *CrossBorderChainCode) putTxnExchange(stub shim.ChaincodeStubInterface, 
 	}
 
 	return t.appendKey(stub, "TxnExchange", txn.ID)
+}
+
+func (t *CrossBorderChainCode) getAllTxnExchange(stub shim.ChaincodeStubInterface) ([]byte, error) {
+	fmt.Println("getAllTxnGoods is running ")
+
+	var txns []TxnExchange
+
+	// Get list of all the keys - TxnExchange
+	keysBytes, err := stub.GetState("TxnExchange")
+	if err != nil {
+		fmt.Println("Error retrieving TxnExchange keys")
+		return nil, errors.New("Error retrieving TxnExchange keys")
+	}
+	var keys []string
+	err = json.Unmarshal(keysBytes, &keys)
+	if err != nil {
+		fmt.Println("Error unmarshalling TxnExchange key")
+		return nil, errors.New("Error unmarshalling TxnExchange keys")
+	}
+
+	// Get each txn from "TxnExchange" keys
+	for _, value := range keys {
+		bytes, err := stub.GetState(value)
+
+		var txn TxnExchange
+		err = json.Unmarshal(bytes, &txn)
+		if err != nil {
+			fmt.Println("Error retrieving txn " + value)
+			return nil, errors.New("Error retrieving txn " + value)
+		}
+
+		fmt.Println("Appending txn goods details " + value)
+		txns = append(txns, txn)
+	}
+
+	bytes, err := json.Marshal(txns)
+	if err != nil {
+		fmt.Println("Error marshaling txns TxnExchange")
+		return nil, errors.New("Error marshaling txns TxnExchange")
+	}
+	return bytes, nil
 }
 
 func (t *CrossBorderChainCode) appendKey(stub shim.ChaincodeStubInterface, primeKey string, key string) ([]byte, error) {
