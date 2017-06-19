@@ -19,6 +19,14 @@ type Entity struct {
 	USD  float64 `json:"usdBalance"`
 }
 
+//Assets - Structure for an assets like usd, euro
+type Assets struct {
+	Asset1       string   `json:"asset1"`
+	Asset2       string   `json:"asset2"`
+	ExchangeRate float64  `json:"exchangeRate"`
+	Time		 string	  `json:"time"`
+}
+
 //TxnTopup - User transactions for adding USD or Euro
 type TxnTopup struct {
 	Initiator string `json:"initiator"`
@@ -155,17 +163,35 @@ func (t *CrossBorderChainCode) Init(stub shim.ChaincodeStubInterface, function s
 		return nil, err
 	}
 
+	blockTime, err := stub.GetTxTimestamp()
+	if err != nil {
+		return nil, err
+		}
+	asset := Assets{
+		Asset1: "USD",
+		Asset2: "Euro",
+		ExchangeRate:  0.5,
+		Time :blockTime.String(),
+	}
+	
+	fmt.Println(asset)
+	bytes, err = json.Marshal(asset)
+
+	if err != nil {
+		fmt.Println("Error marsalling")
+		return nil, errors.New("Error marshalling")
+	}
+	fmt.Println(bytes)
+	err = stub.PutState("Assets", bytes)
+	if err != nil {
+		fmt.Println("Error writing state")
+		return nil, err
+	}
+	
 	// Initialize the collection of  keys for assets and various transactions
 	fmt.Println("Initializing keys collection")
 	var blank []string
 
-	assets := []string{"USD", "Euro"}
-	assetsBytes, _ := json.Marshal(&assets)
-
-	err = stub.PutState("Assets", assetsBytes)
-	if err != nil {
-		fmt.Println("Failed to initialize Assets key collection")
-	}
 
 	blankBytes, _ := json.Marshal(&blank)
 
@@ -217,7 +243,7 @@ func (t *CrossBorderChainCode) Query(stub shim.ChaincodeStubInterface, function 
 	if function == "read" {
 		return t.read(stub, args)
 	} else if function == "getAllCurrencies" {
-		return nil, nil //t.getAllCurrencies(stub)
+		return t.getAllCurrencies(stub)
 	} else if function == "getAllTxnTopup" {
 		return t.getAllTxnTopup(stub)
 	} else if function == "getAllTxnExchange" {
@@ -756,6 +782,47 @@ func (t *CrossBorderChainCode) getAllTxnTransfer(stub shim.ChaincodeStubInterfac
 	if err != nil {
 		fmt.Println("Error marshaling txns TxnTransfer")
 		return nil, errors.New("Error marshaling txns TxnTransfer")
+	}
+	return bytes, nil
+}
+
+func (t *CrossBorderChainCode) getAllCurrencies(stub shim.ChaincodeStubInterface) ([]byte, error) {
+	fmt.Println("getAllTxnTransfer is running ")
+
+	var txns []Assets
+
+	// Get list of all the keys - Assets
+	keysBytes, err := stub.GetState("Assets")
+	if err != nil {
+		fmt.Println("Error retrieving Assets keys")
+		return nil, errors.New("Error retrieving Assets keys")
+	}
+	var keys []string
+	err = json.Unmarshal(keysBytes, &keys)
+	if err != nil {
+		fmt.Println("Error unmarshalling Assets key")
+		return nil, errors.New("Error unmarshalling Assets keys")
+	}
+
+	// Get each txn from "Assets" keys
+	for _, value := range keys {
+		bytes, err := stub.GetState(value)
+
+		var txn Assets
+		err = json.Unmarshal(bytes, &txn)
+		if err != nil {
+			fmt.Println("Error retrieving txn " + value)
+			return nil, errors.New("Error retrieving txn " + value)
+		}
+
+		fmt.Println("Appending asset details " + value)
+		txns = append(txns, txn)
+	}
+
+	bytes, err := json.Marshal(txns)
+	if err != nil {
+		fmt.Println("Error marshaling txns Assets")
+		return nil, errors.New("Error marshaling txns Assets")
 	}
 	return bytes, nil
 }
