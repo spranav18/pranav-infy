@@ -526,16 +526,16 @@ func (t *CrossBorderChainCode) read(stub shim.ChaincodeStubInterface, args []str
 		fmt.Println("Error retrieving " + key)
 		return nil, errors.New("Error retrieving " + key)
 	}
-	customer := Entity{}
-	err = json.Unmarshal(bytes, &customer)
+	entity := Entity{}
+	err = json.Unmarshal(bytes, &entity)
 	if err != nil {
-		fmt.Println("Error Unmarshaling customerBytes")
-		return nil, errors.New("Error Unmarshaling customerBytes")
+		fmt.Println("Error Unmarshaling entityBytes")
+		return nil, errors.New("Error Unmarshaling entityBytes")
 	}
-	bytes, err = json.Marshal(customer)
+	bytes, err = json.Marshal(entity)
 	if err != nil {
-		fmt.Println("Error marshaling customer")
-		return nil, errors.New("Error marshaling customer")
+		fmt.Println("Error marshaling entity")
+		return nil, errors.New("Error marshaling entity")
 	}
 
 	fmt.Println(bytes)
