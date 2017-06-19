@@ -309,15 +309,15 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 		fmt.Println("Error Unmarshaling exchangeCounterBytes")
 		return nil, errors.New("Error Unmarshaling exchangeCounterBytes")
 	}
-	sellQuantity:=qty*exchangeRate
+	buyQuantity:=qty*exchangeRate
 		// Perform the transfer
 		if asset1=="usd" {
 			fmt.Println("usd transfer")
 			if customer.USD >= qty {
 				customer.USD = customer.USD - qty
 				exchangeCounter.USD = exchangeCounter.USD + qty
-				customer.Euro=customer.Euro+sellQuantity
-				exchangeCounter.Euro=exchangeCounter.Euro-sellQuantity
+				customer.Euro=customer.Euro+buyQuantity
+				exchangeCounter.Euro=exchangeCounter.Euro-buyQuantity
 				//args[4] = strconv.Itoa(product.Points * qty)
 				fmt.Printf("customer USD = %d, exchangeCounter USD = %d\n", customer.USD, exchangeCounter.USD)
 			} else {
@@ -327,8 +327,8 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 			if customer.Euro >= qty {
 				customer.Euro = customer.Euro -qty
 				exchangeCounter.Euro = exchangeCounter.Euro + qty
-				customer.USD=customer.USD+sellQuantity
-				exchangeCounter.USD=exchangeCounter.USD-sellQuantity
+				customer.USD=customer.USD+buyQuantity
+				exchangeCounter.USD=exchangeCounter.USD-buyQuantity
 			//	args[4] = strconv.FormatFloat(product.Amount*float64(qty), 'E', -1, 64)
 				fmt.Printf("customer Euro = %f, exchangeCounter Euro = %f\n", customer.Euro, exchangeCounter.Euro)
 			} else {
@@ -357,7 +357,7 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 			return nil, err
 		}
 		// Write the product state back to the ledger
-		args=append(args,fmt.Sprintf("%.6f", sellQuantity))
+		args=append(args,fmt.Sprintf("%.6f", buyQuantity))
 		args = append(args, stub.GetTxID())
 		blockTime, err := stub.GetTxTimestamp()
 		if err != nil {
@@ -627,7 +627,7 @@ func (t *CrossBorderChainCode) putTxnExchange(stub shim.ChaincodeStubInterface, 
 		SellCurrency: args[0],
 		SellQuantity: args[5],
 		BuyCurrency:  args[1],
-		BuyQuantity:  args[5],
+		BuyQuantity:  args[7],
 		ExchangeRate: args[2],
 		Remarks:      args[6] + " - " + args[5],
 		ID:           args[8],
