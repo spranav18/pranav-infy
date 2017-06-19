@@ -221,7 +221,7 @@ func (t *CrossBorderChainCode) Query(stub shim.ChaincodeStubInterface, function 
 	} else if function == "getAllTxnTopup" {
 		return t.getAllTxnTopup(stub)
 	} else if function == "getAllTxnExchange" {
-		return nil, nil //t.getAllTxnExchange(stub)    
+		return t.getAllTxnExchange(stub)    
 	} else if function == "getAllTxnTransfer" {
 		return t.getAllTxnTransfer(stub)
 	}
