@@ -362,7 +362,7 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 			return nil, err
 		}
 		args = append(args, blockTime.String())
-	//	t.putTxnExchange(stub, args)
+		t.putTxnExchange(stub, args)
 
 	return nil, nil
 }
@@ -634,8 +634,8 @@ func (t *CrossBorderChainCode) putTxnExchange(stub shim.ChaincodeStubInterface, 
 
 	bytes, err := json.Marshal(txn)
 	if err != nil {
-		fmt.Println("Error marshaling TxnGoods")
-		return nil, errors.New("Error marshaling TxnGoods")
+		fmt.Println("Error marshaling TxnExchange")
+		return nil, errors.New("Error marshaling TxnExchange")
 	}
 
 	err = stub.PutState(txn.ID, bytes)
@@ -647,7 +647,7 @@ func (t *CrossBorderChainCode) putTxnExchange(stub shim.ChaincodeStubInterface, 
 }
 
 func (t *CrossBorderChainCode) getAllTxnExchange(stub shim.ChaincodeStubInterface) ([]byte, error) {
-	fmt.Println("getAllTxnGoods is running ")
+	fmt.Println("getAllTxnExchange is running ")
 
 	var txns []TxnExchange
 
