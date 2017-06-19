@@ -45,6 +45,8 @@ type TxnTransfer struct {
 	Time     string `json:"time"`
 	Value    string `json:"value"`
 	Asset    string `json:"asset"`
+	Status  string `json:"status"`
+
 }
 
 //ExchangeCurrency - User transaction details for currency exchange
@@ -218,10 +220,12 @@ func (t *CrossBorderChainCode) Invoke(stub shim.ChaincodeStubInterface, function
 		return t.write(stub, args)
 	} else if function == "loadWallet" {
 		return t.loadWallet(stub, args)
-	} else if function == "transfer" {
-		return t.transfer(stub, args)
 	} else if function == "requestTransfer" {
 		return t.requestTransfer(stub, args)
+	} else if function == "approve" {
+		return t.requestTransfer(stub, args)
+	} else if function == "transfer" {
+		return t.transfer(stub, args)
 	} else if function == "exchangeCurrency" {
 		return t.exchangeCurrency(stub, args)
 	}
@@ -296,9 +300,6 @@ func (t *CrossBorderChainCode) requestTransfer(stub shim.ChaincodeStubInterface,
 		return nil, errors.New("Incorrect Number of arguments.Expecting 5 for transfer")
 	}
 	blockTime, err := stub.GetTxTimestamp()
-
-	i++
-	key := "transfer" + strconv.Itoa(i)
 	
 	txn := TxnTransfer{
 		Sender:   args[0],
@@ -308,6 +309,7 @@ func (t *CrossBorderChainCode) requestTransfer(stub shim.ChaincodeStubInterface,
 		Time:     blockTime.String(),
 		Value:    args[3],
 		Asset:    args[2],
+		Status:   "requested",
 	}
 
 	bytes, err := json.Marshal(txn)
@@ -316,12 +318,44 @@ func (t *CrossBorderChainCode) requestTransfer(stub shim.ChaincodeStubInterface,
 		return nil, errors.New("Error marshaling requestTransfer")
 	}
 
-	err = stub.PutState(key, bytes)
+	err = stub.PutState(args[0], bytes)
 	if err != nil {
 		return nil, err
 	}
 
-	return t.appendKey(stub, "TxnTransfer", key)
+	return nil,nil
+}
+
+func (t *CrossBorderChainCode) approve(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+	if len(args) != 5 {
+		return nil, errors.New("Incorrect Number of arguments.Expecting 5 for transfer")
+	}
+	blockTime, err := stub.GetTxTimestamp()
+	
+	txn := TxnTransfer{
+		Sender:   args[0],
+		Receiver: args[1],
+		Remarks:  args[4],
+		ID:       stub.GetTxID(),
+		Time:     blockTime.String(),
+		Value:    args[3],
+		Asset:    args[2],
+		Status:   "approved",
+	}
+
+	bytes, err := json.Marshal(txn)
+	if err != nil {
+		fmt.Println("Error marshaling requestTransfer")
+		return nil, errors.New("Error marshaling requestTransfer")
+	}
+
+	err = stub.PutState("Regulator", bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil,nil
 }
 
 func (t *CrossBorderChainCode) transfer(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -402,8 +436,10 @@ func (t *CrossBorderChainCode) transfer(stub shim.ChaincodeStubInterface, args [
 
 	ID := stub.GetTxID()
 	blockTime, err := stub.GetTxTimestamp()
+	Status:=  "completed"
 	args = append(args, ID)
 	args = append(args, blockTime.String())
+	args = append(args, Status)
 	t.putTxnTransfer(stub, args)
 
 	return nil, nil
@@ -748,8 +784,8 @@ func (t *CrossBorderChainCode) getAllTxnExchange(stub shim.ChaincodeStubInterfac
 func (t *CrossBorderChainCode) putTxnTransfer(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	fmt.Println("putTxnTransfer is running ")
 
-	if len(args) != 7 {
-		return nil, errors.New("Incorrect Number of arguments.Expecting 8 for putTxnTransfer")
+	if len(args) != 8 {
+		return nil, errors.New("Incorrect Number of arguments.Expecting 9 for putTxnTransfer")
 	}
 	txn := TxnTransfer{
 		Sender:   args[0],
@@ -759,6 +795,7 @@ func (t *CrossBorderChainCode) putTxnTransfer(stub shim.ChaincodeStubInterface, 
 		Time:     args[6],
 		Value:    args[3],
 		Asset:    args[2],
+		Status:	  args[7],
 	}
 
 	bytes, err := json.Marshal(txn)
