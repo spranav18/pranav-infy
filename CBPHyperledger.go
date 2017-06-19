@@ -274,7 +274,7 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 	}
 	asset1 := args[0] //domestic currency usd or euro
 	//asset2 := args[1]  //foreign currency usd or euro
-	exchangeRate,err := strconv.ParseFloat(args[5],64)
+	exchangeRate,err := strconv.ParseFloat(args[2],64)
 	key1 := args[3]  //Entity1 ex: customer
 	key2 := args[4]  //Entity2 ex: exchange counter
 	qty, err := strconv.ParseFloat(args[5],64)
@@ -286,11 +286,11 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 	if bytes == nil {
 		return nil, errors.New("Entity not found")
 	}
-	entity := Entity{}
-	err = json.Unmarshal(bytes, &entity)
+	customer := Entity{}
+	err = json.Unmarshal(bytes, &customer)
 	if err != nil {
-		fmt.Println("Error Unmarshaling entityBytes")
-		return nil, errors.New("Error Unmarshaling entityBytes")
+		fmt.Println("Error Unmarshaling customerBytes")
+		return nil, errors.New("Error Unmarshaling customerBytes")
 	}
 
 	bytes, err = stub.GetState(key2)
@@ -300,11 +300,11 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 	if bytes == nil {
 		return nil, errors.New("Entity not found")
 	}
-	
-	err = json.Unmarshal(bytes, &entity)
+	exchangeCounter := Entity{}
+	err = json.Unmarshal(bytes, &exchangeCounter)
 	if err != nil {
-		fmt.Println("Error Unmarshaling entityBytes")
-		return nil, errors.New("Error Unmarshaling entitybytes")
+		fmt.Println("Error Unmarshaling exchangeCounterBytes")
+		return nil, errors.New("Error Unmarshaling exchangeCounterBytes")
 	}
 
 		// Perform the transfer
@@ -315,7 +315,7 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 				exchangeCounter.USD = exchangeCounter.USD + qty
 				customer.Euro=customer.Euro+(qty*exchangeRate)
 				exchangeCounter.Euro=exchangeCounter.Euro-(qty*exchangeRate)
-				//args[5] = strconv.Itoa(product.Points * qty)
+				//args[4] = strconv.Itoa(product.Points * qty)
 				fmt.Printf("customer USD = %d, exchangeCounter USD = %d\n", customer.USD, exchangeCounter.USD)
 			} else {
 				return nil, errors.New("Insufficient points to buy goods")
@@ -326,7 +326,7 @@ func (t *CrossBorderChainCode) exchangeCurrency(stub shim.ChaincodeStubInterface
 				exchangeCounter.Euro = exchangeCounter.Euro + qty
 				customer.USD=customer.USD+(qty*exchangeRate)
 				exchangeCounter.USD=exchangeCounter.USD-(qty*exchangeRate)
-			//	args[5] = strconv.FormatFloat(product.Amount*float64(qty), 'E', -1, 64)
+			//	args[4] = strconv.FormatFloat(product.Amount*float64(qty), 'E', -1, 64)
 				fmt.Printf("customer Euro = %f, exchangeCounter Euro = %f\n", customer.Euro, exchangeCounter.Euro)
 			} else {
 				return nil, errors.New("Insufficient balance to buy goods")
