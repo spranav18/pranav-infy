@@ -23,8 +23,7 @@ type Entity struct {
 type Assets struct {
 	Asset1       string   `json:"asset1"`
 	Asset2       string   `json:"asset2"`
-	ExchangeRate float64  `json:"exchangeRate"`
-	Time		 string	  `json:"time"`
+	ExchangeRate string  `json:"exchangeRate"`
 }
 
 //TxnTopup - User transactions for adding USD or Euro
@@ -163,15 +162,10 @@ func (t *CrossBorderChainCode) Init(stub shim.ChaincodeStubInterface, function s
 		return nil, err
 	}
 
-	blockTime, err := stub.GetTxTimestamp()
-	if err != nil {
-		return nil, err
-		}
 	assets := Assets{
 		Asset1: "USD",
 		Asset2: "Euro",
-		ExchangeRate:  0.5,
-		Time :blockTime.String(),
+		ExchangeRate:  "0.5",
 	}
 	
 	fmt.Println(assets)
@@ -785,6 +779,32 @@ func (t *CrossBorderChainCode) getAllTxnTransfer(stub shim.ChaincodeStubInterfac
 	return bytes, nil
 }
 
+func (t *CrossBorderChainCode) putCurrencies(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("putCurrencies is running ")
+
+	if len(args) != 3 {
+		return nil, errors.New("Incorrect Number of arguments.Expecting 3 for putCurrencies")
+	}
+	asset := Assets{
+		Asset1:   args[0],
+		Asset2: args[1],
+		ExchangeRate:  args[2],
+	}
+
+	bytes, err := json.Marshal(asset)
+	if err != nil {
+		fmt.Println("Error marshaling Assets")
+		return nil, errors.New("Error marshaling Assets")
+	}
+
+	err = stub.PutState(asset.Asset1, bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return t.appendKey(stub, "Assets", asset.Asset1)
+}
+
 func (t *CrossBorderChainCode) getAllCurrencies(stub shim.ChaincodeStubInterface) ([]byte, error) {
 	fmt.Println("getAllCurrencies is running ")
 
@@ -820,8 +840,8 @@ func (t *CrossBorderChainCode) getAllCurrencies(stub shim.ChaincodeStubInterface
 
 	bytes, err := json.Marshal(assets)
 	if err != nil {
-		fmt.Println("Error marshaling assets Assets")
-		return nil, errors.New("Error marshaling assets Assets")
+		fmt.Println("Error marshaling assets")
+		return nil, errors.New("Error marshaling assets")
 	}
 	return bytes, nil
 }
