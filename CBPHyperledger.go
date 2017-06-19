@@ -220,6 +220,8 @@ func (t *CrossBorderChainCode) Invoke(stub shim.ChaincodeStubInterface, function
 		return t.loadWallet(stub, args)
 	} else if function == "transfer" {
 		return t.transfer(stub, args)
+	} else if function == "requestTransfer" {
+		return t.requestTransfer(stub, args)
 	} else if function == "exchangeCurrency" {
 		return t.exchangeCurrency(stub, args)
 	}
