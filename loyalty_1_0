@@ -386,7 +386,7 @@
 			}
 			err = stub.PutState(key1, bytes)
 			if err != nil {
-				return nil, err
+				return shim.Error(err.Error())
 			}
 
 			// Write the merchant/entity2 state back to the ledger]
@@ -397,7 +397,7 @@
 			}
 			err = stub.PutState(key2, bytes)
 			if err != nil {
-				return nil, err
+				return shim.Error(err.Error())
 			}
 			// Write the product state back to the ledger
 			bytes, err = json.Marshal(product)
@@ -413,7 +413,7 @@
 			args = append(args, stub.GetTxID())
 			blockTime, err := stub.GetTxTimestamp()
 			if err != nil {
-				returnshim.Error(err.Error())
+				return shim.Error(err.Error())
 			}
 			args = append(args, blockTime.String())
 			t.putTxnGoods(stub, args)
@@ -734,7 +734,7 @@
 
 		err = stub.PutState(txn.ID, bytes)
 		if err != nil {
-			return nil, err
+			return shim.Error(err.Error())
 		}
 
 		return t.appendKey(stub, "TxnTopup", txn.ID)
@@ -897,12 +897,12 @@
 
 		bytes, err := stub.GetState(primeKey)
 		if err != nil {
-			return nil, err
+			return shim.Error(err.Error())
 		}
 		var keys []string
 		err = json.Unmarshal(bytes, &keys)
 		if err != nil {
-			return nil, err
+			return shim.Error(err.Error())
 		}
 		keys = append(keys, key)
 		bytes, err = json.Marshal(keys)
