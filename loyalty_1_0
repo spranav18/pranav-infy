@@ -407,13 +407,13 @@
 			}
 			err = stub.PutState(key3, bytes)
 			if err != nil {
-				return nil, err
+				return shim.Error(err.Error())
 			}
 
 			args = append(args, stub.GetTxID())
 			blockTime, err := stub.GetTxTimestamp()
 			if err != nil {
-				return nil, err
+				returnshim.Error(err.Error())
 			}
 			args = append(args, blockTime.String())
 			t.putTxnGoods(stub, args)
@@ -470,7 +470,7 @@
 		}
 		err = stub.PutState(key, bytes)
 		if err != nil {
-			return nil, err
+			return shim.Error(err.Error())
 		}
 
 		ID := stub.GetTxID()
@@ -515,7 +515,7 @@
 
 		err = stub.PutState(key, bytes)
 		if err != nil {
-			return nil, err
+			return shim.Error(err.Error())
 		}
 
 		return t.appendKey(stub, "TxnEncash", key)
@@ -585,7 +585,7 @@
 		}
 		err = stub.PutState(txn.Initiator, bytes)
 		if err != nil {
-			return nil, err
+			return shim.Error(err.Error())
 		}
 
 		// Write the bank/entity2 state back to the ledger]
@@ -596,7 +596,7 @@
 		}
 		err = stub.PutState(txn.Bank, bytes)
 		if err != nil {
-			return nil, err
+			return shim.Error(err.Error())
 		}
 
 		blockTime, err := stub.GetTxTimestamp()
@@ -611,7 +611,7 @@
 		}
 		err = stub.PutState(txn.Key, bytes)
 		if err != nil {
-			return nil, err
+			return shim.Error(err.Error())
 		}
 
 		return shim.Success(nil)
@@ -643,7 +643,7 @@
 
 		err = stub.PutState(product.Name, bytes)
 		if err != nil {
-			return nil, err
+			return shim.Error(err.Error())
 		}
 
 		bytes, err = stub.GetState("Products")
@@ -708,7 +708,7 @@
 			fmt.Println("Error marshaling product")
 			return shim.Error("Error marshaling product")
 		}
-		return bytes, nil
+		return shim.Success(bytes)
 	}
 
 	func (t *LoyaltyChaincode) putTxnTopup(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -778,7 +778,7 @@
 			fmt.Println("Error marshaling txns topup")
 			return shim.Error("Error marshaling txns topup")
 		}
-		return bytes, nil
+		return shim.Error(bytes)
 	}
 
 	func (t *LoyaltyChaincode) putTxnGoods(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -805,7 +805,7 @@
 
 		err = stub.PutState(txn.ID, bytes)
 		if err != nil {
-			return nil, err
+			return shim.Error(err.Error())
 		}
 
 		return t.appendKey(stub, "TxnGoods", txn.ID)
@@ -849,7 +849,7 @@
 			fmt.Println("Error marshaling txns TxnGoods")
 			return shim.Error("Error marshaling txns TxnGoods")
 		}
-		return bytes, nil
+		return shim.Error(bytes)
 	}
 
 	func (t *LoyaltyChaincode) getAllTxnEncash(stub shim.ChaincodeStubInterface) ([]byte, error) {
@@ -890,7 +890,7 @@
 			fmt.Println("Error marshaling txns TxnEncash")
 			return shim.Error("Error marshaling txns TxnEncash")
 		}
-		return bytes, nil
+		return shim.Error(bytes)
 	}
 	func (t *LoyaltyChaincode) appendKey(stub shim.ChaincodeStubInterface, primeKey string, key string) ([]byte, error) {
 		fmt.Println("appendKey is running " + primeKey + " " + key)
@@ -912,7 +912,7 @@
 		}
 		err = stub.PutState(primeKey, bytes)
 		if err != nil {
-			return nil, err
+			return shim.Error(err.Error())
 		}
 		return shim.Success(nil)
 	}
