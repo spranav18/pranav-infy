@@ -1,4 +1,4 @@
-	/*
+/*
 	Copyright IBM Corp 2016 All Rights Reserved.
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 		"github.com/hyperledger/fabric/protos/peer"
 		)
 
-	//var i int
+	var i int
 
 	//Entity - Structure for an entity like user, merchant, bank
 	type Entity struct {
@@ -234,7 +234,7 @@
 	 	}
 		fmt.Println("query did not find func: " + function)
 
-		return nil, errors.New("Received unknown function query: " + function)
+		return shim.Error("Received unknown function query: " + function)
 	}
 
 	 // write - invoke function to write key/value pair
@@ -244,675 +244,675 @@
 			 return shim.Error("Incorrect number of arguments. expecting 4")
 		}
 
-	// 	//writing a new customer to blockchain
-	// 	typeOf := args[0]
-	// 	name := args[1]
-	// 	balance, err := strconv.ParseFloat(args[2], 64)
-	// 	points, err := strconv.Atoi(args[3])
-	// 	entity := Entity{
-	// 		Type:    typeOf,
-	// 		Name:    name,
-	// 		Balance: balance,
-	// 		Points:  points,
-	// 	}
-	// 	fmt.Println(entity)
-	// 	bytes, err := json.Marshal(entity)
-	// 	if err != nil {
-	// 		fmt.Println("Error marsalling")
-	// 		return nil, errors.New("Error marshalling")
-	// 	}
-	// 	fmt.Println(bytes)
-	// 	err = stub.PutState(name, bytes)
-	// 	if err != nil {
-	// 		fmt.Println("Error writing state")
-	// 		return nil, err
-	// 	}
+		//writing a new customer to blockchain
+		typeOf := args[0]
+		name := args[1]
+		balance, err := strconv.ParseFloat(args[2], 64)
+		points, err := strconv.Atoi(args[3])
+		entity := Entity{
+			Type:    typeOf,
+			Name:    name,
+			Balance: balance,
+			Points:  points,
+		}
+		fmt.Println(entity)
+		bytes, err := json.Marshal(entity)
+		if err != nil {
+			fmt.Println("Error marsalling")
+			return shim.Error("Error marshalling")
+		}
+		fmt.Println(bytes)
+		err = stub.PutState(name, bytes)
+		if err != nil {
+			fmt.Println("Error writing state")
+			return shim.Error(nil)
+		}
 
-	// 	return nil, nil
-	// }
+		return shim.Success(nil)
+	}
 
 	// read - query function to read key/value pair
 	func (t *LoyaltyChaincode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 		fmt.Println("read() is running")
 
 		if len(args) != 1 {
-			return nil, errors.New("Incorrect number of arguments. expecting 1")
+			return shim.Error("Incorrect number of arguments. expecting 1")
 		}
 		key := args[0] // name of Entity
 		bytes, err := stub.GetState(key)
 		if err != nil {
 			fmt.Println("Error retrieving " + key)
-			return nil, errors.New("Error retrieving " + key)
+			return shim.Error("Error retrieving " + key)
 		}
 		customer := Entity{}
 		err = json.Unmarshal(bytes, &customer)
 		if err != nil {
 			fmt.Println("Error Unmarshaling customerBytes")
-			return nil, errors.New("Error Unmarshaling customerBytes")
+			return shim.Error("Error Unmarshaling customerBytes")
 		}
 		bytes, err = json.Marshal(customer)
 		if err != nil {
 			fmt.Println("Error marshaling customer")
-			return nil, errors.New("Error marshaling customer")
+			return shim.Error("Error marshaling customer")
 		}
 
 		fmt.Println(bytes)
-		return bytes, nil}
+		return shim.Success(bytes)
+	}
 
-	// func (t *LoyaltyChaincode) buyGoods(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	func (t *LoyaltyChaincode) buyGoods(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
-	// 	fmt.Println("buyGoods is running ")
+		fmt.Println("buyGoods is running ")
 
-	// 	if len(args) != 6 {
-	// 		return nil, errors.New("Incorrect Number of arguments.Expecting 6 for buy goods")
-	// 	}
-	// 	asset := args[0] //points or balance
-	// 	key1 := args[1]  //Entity1 ex: customer
-	// 	key2 := args[2]  //Entity2 ex: merchant
-	// 	key3 := args[3]  //Product Entity
-	// 	qty, err := strconv.Atoi(args[4])
+		if len(args) != 6 {
+			return shim.Error("Incorrect Number of arguments.Expecting 6 for buy goods")
+		}
+		asset := args[0] //points or balance
+		key1 := args[1]  //Entity1 ex: customer
+		key2 := args[2]  //Entity2 ex: merchant
+		key3 := args[3]  //Product Entity
+		qty, err := strconv.Atoi(args[4])
 
-	// 	bytes, err := stub.GetState(key1)
-	// 	if err != nil {
-	// 		return nil, errors.New("Failed to get state of " + key1)
-	// 	}
-	// 	if bytes == nil {
-	// 		return nil, errors.New("Entity not found")
-	// 	}
-	// 	customer := Entity{}
-	// 	err = json.Unmarshal(bytes, &customer)
-	// 	if err != nil {
-	// 		fmt.Println("Error Unmarshaling customerBytes")
-	// 		return nil, errors.New("Error Unmarshaling customerBytes")
-	// 	}
+		bytes, err := stub.GetState(key1)
+		if err != nil {
+			return shim.Error("Failed to get state of " + key1)
+		}
+		if bytes == nil {
+			return shim.Error("Entity not found")
+		}
+		customer := Entity{}
+		err = json.Unmarshal(bytes, &customer)
+		if err != nil {
+			fmt.Println("Error Unmarshaling customerBytes")
+			return shim.Error("Error Unmarshaling customerBytes")
+		}
 
-	// 	bytes, err = stub.GetState(key2)
-	// 	if err != nil {
-	// 		return nil, errors.New("Failed to get state of " + key2)
-	// 	}
-	// 	if bytes == nil {
-	// 		return nil, errors.New("Entity not found")
-	// 	}
-	// 	merchant := Entity{}
-	// 	err = json.Unmarshal(bytes, &merchant)
-	// 	if err != nil {
-	// 		fmt.Println("Error Unmarshaling customerBytes")
-	// 		return nil, errors.New("Error Unmarshaling customerBytes")
-	// 	}
-	// 	bytes, err = stub.GetState(key3)
-	// 	if err != nil {
-	// 		return nil, errors.New("Failed to get state of " + key2)
-	// 	}
-	// 	product := Product{}
-	// 	err = json.Unmarshal(bytes, &product)
-	// 	if err != nil {
-	// 		fmt.Println("Error Unmarshaling product bytes")
-	// 		return nil, errors.New("Error Unmarshaling product Bytes")
-	// 	}
-	// 	if product.Entity == merchant.Name && product.Qty >= qty {
-	// 		// Perform the transfer
-	// 		if s.Compare(asset, "points") == 0 {
-	// 			fmt.Println("points transfer")
-	// 			//X, err := strconv.Atoi(args[3])
-	// 			if customer.Points >= product.Points*qty {
-	// 				customer.Points = customer.Points - product.Points*qty
-	// 				merchant.Points = merchant.Points + product.Points*qty
-	// 				product.Qty -= qty
-	// 				args[4] = strconv.Itoa(product.Points * qty)
-	// 				fmt.Printf("customer Points = %d, merchant Points = %d\n", customer.Points, merchant.Points)
-	// 			} else {
-	// 				return nil, errors.New("Insufficient points to buy goods")
-	// 			}
-	// 		} else {
-	// 			fmt.Println("balance to be added")
-	// 			//X, err := strconv.ParseFloat(args[3], 64)
-	// 			if customer.Balance >= product.Amount*float64(qty) {
-	// 				customer.Balance = customer.Balance - product.Amount*float64(qty)
-	// 				merchant.Balance = merchant.Balance + product.Amount*float64(qty)
-	// 				product.Qty -= qty
-	// 				args[4] = strconv.FormatFloat(product.Amount*float64(qty), 'f', -1, 64)
-	// 				fmt.Printf("customer Balance = %f, merchant Balance = %f\n", customer.Balance, merchant.Balance)
-	// 			} else {
-	// 				return nil, errors.New("Insufficient balance to buy goods")
-	// 			}
-	// 		}
-	// 		//product.Entity = customer.Name
-	// 		// Write the customer/entity1 state back to the ledger
-	// 		bytes, err = json.Marshal(customer)
-	// 		if err != nil {
-	// 			fmt.Println("Error marshaling customer")
-	// 			return nil, errors.New("Error marshaling customer")
-	// 		}
-	// 		err = stub.PutState(key1, bytes)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
+		bytes, err = stub.GetState(key2)
+		if err != nil {
+			return shim.Error("Failed to get state of " + key2)
+		}
+		if bytes == nil {
+			return shim.Error("Entity not found")
+		}
+		merchant := Entity{}
+		err = json.Unmarshal(bytes, &merchant)
+		if err != nil {
+			fmt.Println("Error Unmarshaling customerBytes")
+			return shim.Error("Error Unmarshaling customerBytes")
+		}
+		bytes, err = stub.GetState(key3)
+		if err != nil {
+			return shim.Error("Failed to get state of " + key2)
+		}
+		product := Product{}
+		err = json.Unmarshal(bytes, &product)
+		if err != nil {
+			fmt.Println("Error Unmarshaling product bytes")
+			return shim.Error("Error Unmarshaling product Bytes")
+		}
+		if product.Entity == merchant.Name && product.Qty >= qty {
+			// Perform the transfer
+			if s.Compare(asset, "points") == 0 {
+				fmt.Println("points transfer")
+				//X, err := strconv.Atoi(args[3])
+				if customer.Points >= product.Points*qty {
+					customer.Points = customer.Points - product.Points*qty
+					merchant.Points = merchant.Points + product.Points*qty
+					product.Qty -= qty
+					args[4] = strconv.Itoa(product.Points * qty)
+					fmt.Printf("customer Points = %d, merchant Points = %d\n", customer.Points, merchant.Points)
+				} else {
+					return shim.Error("Insufficient points to buy goods")
+				}
+			} else {
+				fmt.Println("balance to be added")
+				//X, err := strconv.ParseFloat(args[3], 64)
+				if customer.Balance >= product.Amount*float64(qty) {
+					customer.Balance = customer.Balance - product.Amount*float64(qty)
+					merchant.Balance = merchant.Balance + product.Amount*float64(qty)
+					product.Qty -= qty
+					args[4] = strconv.FormatFloat(product.Amount*float64(qty), 'f', -1, 64)
+					fmt.Printf("customer Balance = %f, merchant Balance = %f\n", customer.Balance, merchant.Balance)
+				} else {
+					return shim.Error("Insufficient balance to buy goods")
+				}
+			}
+			//product.Entity = customer.Name
+			// Write the customer/entity1 state back to the ledger
+			bytes, err = json.Marshal(customer)
+			if err != nil {
+				fmt.Println("Error marshaling customer")
+				return shim.Error("Error marshaling customer")
+			}
+			err = stub.PutState(key1, bytes)
+			if err != nil {
+				return nil, err
+			}
 
-	// 		// Write the merchant/entity2 state back to the ledger]
-	// 		bytes, err = json.Marshal(merchant)
-	// 		if err != nil {
-	// 			fmt.Println("Error marshaling customer")
-	// 			return nil, errors.New("Error marshaling customer")
-	// 		}
-	// 		err = stub.PutState(key2, bytes)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-	// 		// Write the product state back to the ledger
-	// 		bytes, err = json.Marshal(product)
-	// 		if err != nil {
-	// 			fmt.Println("Error marshaling customer")
-	// 			return nil, errors.New("Error marshaling customer")
-	// 		}
-	// 		err = stub.PutState(key3, bytes)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
+			// Write the merchant/entity2 state back to the ledger]
+			bytes, err = json.Marshal(merchant)
+			if err != nil {
+				fmt.Println("Error marshaling customer")
+				return shim.Error("Error marshaling customer")
+			}
+			err = stub.PutState(key2, bytes)
+			if err != nil {
+				return nil, err
+			}
+			// Write the product state back to the ledger
+			bytes, err = json.Marshal(product)
+			if err != nil {
+				fmt.Println("Error marshaling customer")
+				return shim.Error("Error marshaling customer")
+			}
+			err = stub.PutState(key3, bytes)
+			if err != nil {
+				return nil, err
+			}
 
-	// 		args = append(args, stub.GetTxID())
-	// 		blockTime, err := stub.GetTxTimestamp()
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-	// 		args = append(args, blockTime.String())
-	// 		t.putTxnGoods(stub, args)
-	// 	}
+			args = append(args, stub.GetTxID())
+			blockTime, err := stub.GetTxTimestamp()
+			if err != nil {
+				return nil, err
+			}
+			args = append(args, blockTime.String())
+			t.putTxnGoods(stub, args)
+		}
 
-	// 	return nil, nil
-	// }
+		return shim.Success(nil)
+	}
 
-	// func (t *LoyaltyChaincode) add(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	func (t *LoyaltyChaincode) add(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
-	// 	fmt.Println("add is running ")
+		fmt.Println("add is running ")
 
-	// 	if len(args) != 3 {
-	// 		return nil, errors.New("Incorrect Number of arguments.Expecting 3 for add")
-	// 	}
+		if len(args) != 3 {
+			return shim.Error("Incorrect Number of arguments.Expecting 3 for add")
+		}
 
-	// 	asset := args[0] //points or balance
-	// 	key := args[1]   //Entity ex: customer
-	// 	//amt, err := strconv.Atoi(args[1]) // points to be issued
+		asset := args[0] //points or balance
+		key := args[1]   //Entity ex: customer
+		//amt, err := strconv.Atoi(args[1]) // points to be issued
 
-	// 	// GET the state of entity from the ledger
-	// 	bytes, err := stub.GetState(key)
-	// 	if err != nil {
-	// 		return nil, errors.New("Failed to get state of " + key)
-	// 	}
+		// GET the state of entity from the ledger
+		bytes, err := stub.GetState(key)
+		if err != nil {
+			return shim.Error("Failed to get state of " + key)
+		}
 
-	// 	entity := Entity{}
-	// 	err = json.Unmarshal(bytes, &entity)
-	// 	if err != nil {
-	// 		fmt.Println("Error Unmarshaling entity Bytes")
-	// 		return nil, errors.New("Error Unmarshaling entity Bytes")
-	// 	}
+		entity := Entity{}
+		err = json.Unmarshal(bytes, &entity)
+		if err != nil {
+			fmt.Println("Error Unmarshaling entity Bytes")
+			return shim.Error("Error Unmarshaling entity Bytes")
+		}
 
-	// 	// Perform the addition of assests
-	// 	if asset == "points" {
-	// 		amt, err := strconv.Atoi(args[2])
-	// 		if err == nil {
-	// 			entity.Points = entity.Points + amt
-	// 			fmt.Println("entity Points = ", entity.Points)
-	// 		}
-	// 	} else {
-	// 		amt, err := strconv.ParseFloat(args[2], 64)
-	// 		if err == nil {
-	// 			entity.Balance = entity.Balance + amt
-	// 			fmt.Println("entity Points = ", entity.Points)
-	// 		}
-	// 	}
+		// Perform the addition of assests
+		if asset == "points" {
+			amt, err := strconv.Atoi(args[2])
+			if err == nil {
+				entity.Points = entity.Points + amt
+				fmt.Println("entity Points = ", entity.Points)
+			}
+		} else {
+			amt, err := strconv.ParseFloat(args[2], 64)
+			if err == nil {
+				entity.Balance = entity.Balance + amt
+				fmt.Println("entity Points = ", entity.Points)
+			}
+		}
 
-	// 	// Write the state back to the ledger
-	// 	bytes, err = json.Marshal(entity)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling entity")
-	// 		return nil, errors.New("Error marshaling entity")
-	// 	}
-	// 	err = stub.PutState(key, bytes)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+		// Write the state back to the ledger
+		bytes, err = json.Marshal(entity)
+		if err != nil {
+			fmt.Println("Error marshaling entity")
+			return shim.Error("Error marshaling entity")
+		}
+		err = stub.PutState(key, bytes)
+		if err != nil {
+			return nil, err
+		}
 
-	// 	ID := stub.GetTxID()
-	// 	blockTime, err := stub.GetTxTimestamp()
-	// 	args = append(args, ID)
-	// 	args = append(args, blockTime.String())
-	// 	t.putTxnTopup(stub, args)
+		ID := stub.GetTxID()
+		blockTime, err := stub.GetTxTimestamp()
+		args = append(args, ID)
+		args = append(args, blockTime.String())
+		t.putTxnTopup(stub, args)
 
-	// 	return nil, nil
-	// }
+		return shim.Success(nil)
+	}
 
-	// func (t *LoyaltyChaincode) encashMerchant(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	func (t *LoyaltyChaincode) encashMerchant(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
-	// 	fmt.Println("encashMerchant is running ")
+		fmt.Println("encashMerchant is running ")
 
-	// 	if len(args) != 3 {
-	// 		return nil, errors.New("Incorrect Number of arguments.Expecting 3 for encashMerchant")
-	// 	}
+		if len(args) != 3 {
+			return shim.Error("Incorrect Number of arguments.Expecting 3 for encashMerchant")
+		}
 
-	// 	points, err := strconv.Atoi(args[2])
-	// 	blockTime, err := stub.GetTxTimestamp()
-	// 	//time.Unix(blockTime.Seconds, 0)
+		points, err := strconv.Atoi(args[2])
+		blockTime, err := stub.GetTxTimestamp()
+		//time.Unix(blockTime.Seconds, 0)
 
-	// 	i++
-	// 	key := "encash" + strconv.Itoa(i)
-	// 	txn := TxnEncash{
-	// 		Key:       key,
-	// 		ID:        stub.GetTxID(),
-	// 		Initiator: args[0],
-	// 		Bank:      args[1],
-	// 		Points:    points,
-	// 		Amount:    points / 100,
-	// 		Remarks:   "New Request for Encashment",
-	// 		Time:      blockTime.String(),
-	// 	}
+		i++
+		key := "encash" + strconv.Itoa(i)
+		txn := TxnEncash{
+			Key:       key,
+			ID:        stub.GetTxID(),
+			Initiator: args[0],
+			Bank:      args[1],
+			Points:    points,
+			Amount:    points / 100,
+			Remarks:   "New Request for Encashment",
+			Time:      blockTime.String(),
+		}
 
-	// 	bytes, err := json.Marshal(txn)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling encashMerchant")
-	// 		return nil, errors.New("Error marshaling encashMerchant")
-	// 	}
+		bytes, err := json.Marshal(txn)
+		if err != nil {
+			fmt.Println("Error marshaling encashMerchant")
+			return shim.Error("Error marshaling encashMerchant")
+		}
 
-	// 	err = stub.PutState(key, bytes)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+		err = stub.PutState(key, bytes)
+		if err != nil {
+			return nil, err
+		}
 
-	// 	return t.appendKey(stub, "TxnEncash", key)
-	// }
+		return t.appendKey(stub, "TxnEncash", key)
+	}
 
-	// func (t *LoyaltyChaincode) approve(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	func (t *LoyaltyChaincode) approve(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
-	// 	fmt.Println("approve is running ")
+		fmt.Println("approve is running ")
 
-	// 	if len(args) != 1 {
-	// 		return nil, errors.New("Incorrect Number of arguments.Expecting 1 for approve")
-	// 	}
+		if len(args) != 1 {
+			return shim.Error("Incorrect Number of arguments.Expecting 1 for approve")
+		}
 
-	// 	bytes, err := stub.GetState(args[0])
-	// 	if err != nil {
-	// 		return nil, errors.New("Failed to get state of encash key")
-	// 	}
-	// 	if bytes == nil {
-	// 		return nil, errors.New("Entity not found")
-	// 	}
-	// 	txn := TxnEncash{}
-	// 	err = json.Unmarshal(bytes, &txn)
-	// 	if err != nil {
-	// 		fmt.Println("Error Unmarshaling TxnEncash")
-	// 		return nil, errors.New("Error Unmarshaling TxnEncash")
-	// 	}
+		bytes, err := stub.GetState(args[0])
+		if err != nil {
+			return shim.Error("Failed to get state of encash key")
+		}
+		if bytes == nil {
+			return shim.Error("Entity not found")
+		}
+		txn := TxnEncash{}
+		err = json.Unmarshal(bytes, &txn)
+		if err != nil {
+			fmt.Println("Error Unmarshaling TxnEncash")
+			return shim.Error("Error Unmarshaling TxnEncash")
+		}
 
-	// 	bytes, err = stub.GetState(txn.Initiator)
-	// 	if err != nil {
-	// 		return nil, errors.New("Failed to get state of " + txn.Initiator)
-	// 	}
-	// 	if bytes == nil {
-	// 		return nil, errors.New("Entity not found")
-	// 	}
-	// 	merchant := Entity{}
-	// 	err = json.Unmarshal(bytes, &merchant)
-	// 	if err != nil {
-	// 		fmt.Println("Error Unmarshaling merchant encash")
-	// 		return nil, errors.New("Error Unmarshaling encash merchant")
-	// 	}
+		bytes, err = stub.GetState(txn.Initiator)
+		if err != nil {
+			return shim.Error("Failed to get state of " + txn.Initiator)
+		}
+		if bytes == nil {
+			return shim.Error("Entity not found")
+		}
+		merchant := Entity{}
+		err = json.Unmarshal(bytes, &merchant)
+		if err != nil {
+			fmt.Println("Error Unmarshaling merchant encash")
+			return shim.Error("Error Unmarshaling encash merchant")
+		}
 
-	// 	bytes, err = stub.GetState(txn.Bank)
-	// 	if err != nil {
-	// 		return nil, errors.New("Failed to get state of " + txn.Bank)
-	// 	}
-	// 	if bytes == nil {
-	// 		return nil, errors.New("Entity not found")
-	// 	}
-	// 	bank := Entity{}
-	// 	err = json.Unmarshal(bytes, &bank)
-	// 	if err != nil {
-	// 		fmt.Println("Error Unmarshaling bank encash")
-	// 		return nil, errors.New("Error Unmarshaling encash bank")
-	// 	}
+		bytes, err = stub.GetState(txn.Bank)
+		if err != nil {
+			return shim.Error("Failed to get state of " + txn.Bank)
+		}
+		if bytes == nil {
+			return shim.Error("Entity not found")
+		}
+		bank := Entity{}
+		err = json.Unmarshal(bytes, &bank)
+		if err != nil {
+			fmt.Println("Error Unmarshaling bank encash")
+			return shim.Error("Error Unmarshaling encash bank")
+		}
 
-	// 	// Perform encashment
-	// 	bank.Points = bank.Points + txn.Points
-	// 	merchant.Points = merchant.Points - txn.Points
-	// 	bank.Balance = bank.Balance - float64(txn.Amount)
-	// 	merchant.Balance = merchant.Balance + float64(txn.Amount)
+		// Perform encashment
+		bank.Points = bank.Points + txn.Points
+		merchant.Points = merchant.Points - txn.Points
+		bank.Balance = bank.Balance - float64(txn.Amount)
+		merchant.Balance = merchant.Balance + float64(txn.Amount)
 
-	// 	// Write the merchant/entity1 state back to the ledger
-	// 	bytes, err = json.Marshal(merchant)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling merchant")
-	// 		return nil, errors.New("Error marshaling merchant")
-	// 	}
-	// 	err = stub.PutState(txn.Initiator, bytes)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+		// Write the merchant/entity1 state back to the ledger
+		bytes, err = json.Marshal(merchant)
+		if err != nil {
+			fmt.Println("Error marshaling merchant")
+			return shim.Error("Error marshaling merchant")
+		}
+		err = stub.PutState(txn.Initiator, bytes)
+		if err != nil {
+			return nil, err
+		}
 
-	// 	// Write the bank/entity2 state back to the ledger]
-	// 	bytes, err = json.Marshal(bank)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling bank")
-	// 		return nil, errors.New("Error marshaling bank")
-	// 	}
-	// 	err = stub.PutState(txn.Bank, bytes)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+		// Write the bank/entity2 state back to the ledger]
+		bytes, err = json.Marshal(bank)
+		if err != nil {
+			fmt.Println("Error marshaling bank")
+			return shim.Error("Error marshaling bank")
+		}
+		err = stub.PutState(txn.Bank, bytes)
+		if err != nil {
+			return nil, err
+		}
 
-	// 	blockTime, err := stub.GetTxTimestamp()
-	// 	txn.Time = blockTime.String()
-	// 	txn.ID = stub.GetTxID()
-	// 	txn.Remarks = "Encashment Completed"
-	// 	// Write the TxnEncash state back to the ledger
-	// 	bytes, err = json.Marshal(txn)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling TxnGoods")
-	// 		return nil, errors.New("Error marshaling TxnGoods")
-	// 	}
-	// 	err = stub.PutState(txn.Key, bytes)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+		blockTime, err := stub.GetTxTimestamp()
+		txn.Time = blockTime.String()
+		txn.ID = stub.GetTxID()
+		txn.Remarks = "Encashment Completed"
+		// Write the TxnEncash state back to the ledger
+		bytes, err = json.Marshal(txn)
+		if err != nil {
+			fmt.Println("Error marshaling TxnGoods")
+			return shim.Error("Error marshaling TxnGoods")
+		}
+		err = stub.PutState(txn.Key, bytes)
+		if err != nil {
+			return nil, err
+		}
 
-	// 	return nil, nil
-	// }
+		return shim.Success(nil)
+	}
 
-	// func (t *LoyaltyChaincode) addProduct(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	// 	fmt.Println("adding product information")
+	func (t *LoyaltyChaincode) addProduct(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+		fmt.Println("adding product information")
 		
-	// 	if len(args) != 5 {
-	// 		return nil, errors.New("Incorrect Number of arguments.Expecting 5 for addProduct")
-	// 	}
-	// 	amt, err := strconv.ParseFloat(args[2], 64)
-	// 	points, err := strconv.Atoi(args[1])
-	// 	qty, err := strconv.Atoi(args[4])
+		if len(args) != 5 {
+			return shim.Error("Incorrect Number of arguments.Expecting 5 for addProduct")
+		}
+		amt, err := strconv.ParseFloat(args[2], 64)
+		points, err := strconv.Atoi(args[1])
+		qty, err := strconv.Atoi(args[4])
 
-	// 	product := Product{
-	// 		Name:   args[0],
-	// 		Points: points,
-	// 		Amount: amt,
-	// 		Entity: args[3],
-	// 		Qty:    qty,
-	// 	}
+		product := Product{
+			Name:   args[0],
+			Points: points,
+			Amount: amt,
+			Entity: args[3],
+			Qty:    qty,
+		}
 
-	// 	bytes, err := json.Marshal(product)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling product")
-	// 		return nil, errors.New("Error marshaling product")
-	// 	}
+		bytes, err := json.Marshal(product)
+		if err != nil {
+			fmt.Println("Error marshaling product")
+			return shim.Error("Error marshaling product")
+		}
 
-	// 	err = stub.PutState(product.Name, bytes)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+		err = stub.PutState(product.Name, bytes)
+		if err != nil {
+			return nil, err
+		}
 
-	// 	bytes, err = stub.GetState("Products")
-	// 	if err != nil {
+		bytes, err = stub.GetState("Products")
+		if err != nil {
 
-	// 	}
-	// 	var keys []string
-	// 	err = json.Unmarshal(bytes, &keys)
-	// 	if err != nil {
+		}
+		var keys []string
+		err = json.Unmarshal(bytes, &keys)
+		if err != nil {
 
-	// 	}
-	// 	keys = append(keys, args[0])
-	// 	bytes, err = json.Marshal(keys)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling product keys")
-	// 		return nil, errors.New("Error marshaling product keys")
-	// 	}
-	// 	err = stub.PutState("Products", bytes)
-	// 	if err != nil {
+		}
+		keys = append(keys, args[0])
+		bytes, err = json.Marshal(keys)
+		if err != nil {
+			fmt.Println("Error marshaling product keys")
+			return shim.Error("Error marshaling product keys")
+		}
+		err = stub.PutState("Products", bytes)
+		if err != nil {
 
-	// 	}
+		}
 
-	// 	return nil, nil
-	// }
+		return shim.Success(nil)
+	}
 
-	// func (t *LoyaltyChaincode) getAllProducts(stub shim.ChaincodeStubInterface) ([]byte, error) {
+	func (t *LoyaltyChaincode) getAllProducts(stub shim.ChaincodeStubInterface) ([]byte, error) {
 
-	// 	fmt.Println("getAllProducts is running ")
+		fmt.Println("getAllProducts is running ")
 
-	// 	var products []Product
+		var products []Product
 
-	// 	// Get list of all the keys - Products
-	// 	keysBytes, err := stub.GetState("Products")
-	// 	if err != nil {
-	// 		fmt.Println("Error retrieving Products")
-	// 		return nil, errors.New("Error retrieving Products")
-	// 	}
-	// 	var keys []string
-	// 	err = json.Unmarshal(keysBytes, &keys)
-	// 	if err != nil {
-	// 		fmt.Println("Error unmarshalling Products")
-	// 		return nil, errors.New("Error unmarshalling Products")
-	// 	}
+		// Get list of all the keys - Products
+		keysBytes, err := stub.GetState("Products")
+		if err != nil {
+			fmt.Println("Error retrieving Products")
+			return shim.Error("Error retrieving Products")
+		}
+		var keys []string
+		err = json.Unmarshal(keysBytes, &keys)
+		if err != nil {
+			fmt.Println("Error unmarshalling Products")
+			return shim.Error("Error unmarshalling Products")
+		}
 
-	// 	// Get each product from "Products" keys
-	// 	for _, value := range keys {
-	// 		bytes, err := stub.GetState(value)
+		// Get each product from "Products" keys
+		for _, value := range keys {
+			bytes, err := stub.GetState(value)
 
-	// 		var product Product
-	// 		err = json.Unmarshal(bytes, &product)
-	// 		if err != nil {
-	// 			fmt.Println("Error retrieving product " + value)
-	// 			return nil, errors.New("Error retrieving product " + value)
-	// 		}
+			var product Product
+			err = json.Unmarshal(bytes, &product)
+			if err != nil {
+				fmt.Println("Error retrieving product " + value)
+				return shim.Error("Error retrieving product " + value)
+			}
 
-	// 		fmt.Println("Appending product " + value)
-	// 		products = append(products, product)
-	// 	}
+			fmt.Println("Appending product " + value)
+			products = append(products, product)
+		}
 
-	// 	bytes, err := json.Marshal(products)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling product")
-	// 		return nil, errors.New("Error marshaling product")
-	// 	}
-	// 	return bytes, nil
-	// }
+		bytes, err := json.Marshal(products)
+		if err != nil {
+			fmt.Println("Error marshaling product")
+			return shim.Error("Error marshaling product")
+		}
+		return bytes, nil
+	}
 
-	// func (t *LoyaltyChaincode) putTxnTopup(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	// 	fmt.Println("putTxnTopup is running ")
+	func (t *LoyaltyChaincode) putTxnTopup(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+		fmt.Println("putTxnTopup is running ")
 
-	// 	if len(args) != 5 {
-	// 		return nil, errors.New("Incorrect Number of arguments.Expecting 5 for putTxnTopup")
-	// 	}
-	// 	txn := TxnTopup{
-	// 		Initiator: args[1],
-	// 		Remarks:   args[0] + " addedd",
-	// 		ID:        args[3],
-	// 		Time:      args[4],
-	// 		Value:     args[2],
-	// 		Asset:     args[0],
-	// 	}
+		if len(args) != 5 {
+			return shim.Error("Incorrect Number of arguments.Expecting 5 for putTxnTopup")
+		}
+		txn := TxnTopup{
+			Initiator: args[1],
+			Remarks:   args[0] + " addedd",
+			ID:        args[3],
+			Time:      args[4],
+			Value:     args[2],
+			Asset:     args[0],
+		}
 
-	// 	bytes, err := json.Marshal(txn)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling TxnTopup")
-	// 		return nil, errors.New("Error marshaling TxnTopup")
-	// 	}
+		bytes, err := json.Marshal(txn)
+		if err != nil {
+			fmt.Println("Error marshaling TxnTopup")
+			return shim.Error("Error marshaling TxnTopup")
+		}
 
-	// 	err = stub.PutState(txn.ID, bytes)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+		err = stub.PutState(txn.ID, bytes)
+		if err != nil {
+			return nil, err
+		}
 
-	// 	return t.appendKey(stub, "TxnTopup", txn.ID)
-	// }
+		return t.appendKey(stub, "TxnTopup", txn.ID)
+	}
 
-	// func (t *LoyaltyChaincode) getAllTxnTopup(stub shim.ChaincodeStubInterface) ([]byte, error) {
-	// 	fmt.Println("getAllTxnTopup is running ")
+	func (t *LoyaltyChaincode) getAllTxnTopup(stub shim.ChaincodeStubInterface) ([]byte, error) {
+		fmt.Println("getAllTxnTopup is running ")
 
-	// 	var txns []TxnTopup
+		var txns []TxnTopup
 
-	// 	// Get list of all the keys - TxnTopup
-	// 	keysBytes, err := stub.GetState("TxnTopup")
-	// 	if err != nil {
-	// 		fmt.Println("Error retrieving TxnTopup keys")
-	// 		return nil, errors.New("Error retrieving TxnTopup keys")
-	// 	}
-	// 	var keys []string
-	// 	err = json.Unmarshal(keysBytes, &keys)
-	// 	if err != nil {
-	// 		fmt.Println("Error unmarshalling TxnTopup key")
-	// 		return nil, errors.New("Error unmarshalling TxnTopup keys")
-	// 	}
+		// Get list of all the keys - TxnTopup
+		keysBytes, err := stub.GetState("TxnTopup")
+		if err != nil {
+			fmt.Println("Error retrieving TxnTopup keys")
+			return shim.Error("Error retrieving TxnTopup keys")
+		}
+		var keys []string
+		err = json.Unmarshal(keysBytes, &keys)
+		if err != nil {
+			fmt.Println("Error unmarshalling TxnTopup key")
+			return shim.Error("Error unmarshalling TxnTopup keys")
+		}
 
-	// 	// Get each product txn "TxnTopup" keys
-	// 	for _, value := range keys {
-	// 		bytes, err := stub.GetState(value)
+		// Get each product txn "TxnTopup" keys
+		for _, value := range keys {
+			bytes, err := stub.GetState(value)
 
-	// 		var txn TxnTopup
-	// 		err = json.Unmarshal(bytes, &txn)
-	// 		if err != nil {
-	// 			fmt.Println("Error retrieving txn " + value)
-	// 			return nil, errors.New("Error retrieving txn " + value)
-	// 		}
+			var txn TxnTopup
+			err = json.Unmarshal(bytes, &txn)
+			if err != nil {
+				fmt.Println("Error retrieving txn " + value)
+				return shim.Error("Error retrieving txn " + value)
+			}
 
-	// 		fmt.Println("Appending txn" + value)
-	// 		txns = append(txns, txn)
-	// 	}
+			fmt.Println("Appending txn" + value)
+			txns = append(txns, txn)
+		}
 
-	// 	bytes, err := json.Marshal(txns)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling txns topup")
-	// 		return nil, errors.New("Error marshaling txns topup")
-	// 	}
-	// 	return bytes, nil
-	// }
+		bytes, err := json.Marshal(txns)
+		if err != nil {
+			fmt.Println("Error marshaling txns topup")
+			return shim.Error("Error marshaling txns topup")
+		}
+		return bytes, nil
+	}
 
-	// func (t *LoyaltyChaincode) putTxnGoods(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	// 	fmt.Println("putTxnGoods is running ")
+	func (t *LoyaltyChaincode) putTxnGoods(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+		fmt.Println("putTxnGoods is running ")
 
-	// 	if len(args) != 8 {
-	// 		return nil, errors.New("Incorrect Number of arguments.Expecting 8 for putTxnGoods")
-	// 	}
-	// 	txn := TxnGoods{
-	// 		Sender:   args[1],
-	// 		Receiver: args[2],
-	// 		Remarks:  args[3] + " - " + args[5],
-	// 		ID:       args[6],
-	// 		Time:     args[7],
-	// 		Value:    args[4],
-	// 		Asset:    args[0],
-	// 	}
+		if len(args) != 8 {
+			return shim.Error("Incorrect Number of arguments.Expecting 8 for putTxnGoods")
+		}
+		txn := TxnGoods{
+			Sender:   args[1],
+			Receiver: args[2],
+			Remarks:  args[3] + " - " + args[5],
+			ID:       args[6],
+			Time:     args[7],
+			Value:    args[4],
+			Asset:    args[0],
+		}
 
-	// 	bytes, err := json.Marshal(txn)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling TxnGoods")
-	// 		return nil, errors.New("Error marshaling TxnGoods")
-	// 	}
+		bytes, err := json.Marshal(txn)
+		if err != nil {
+			fmt.Println("Error marshaling TxnGoods")
+			return shim.Error("Error marshaling TxnGoods")
+		}
 
-	// 	err = stub.PutState(txn.ID, bytes)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+		err = stub.PutState(txn.ID, bytes)
+		if err != nil {
+			return nil, err
+		}
 
-	// 	return t.appendKey(stub, "TxnGoods", txn.ID)
-	// }
+		return t.appendKey(stub, "TxnGoods", txn.ID)
+	}
 
-	// func (t *LoyaltyChaincode) getAllTxnGoods(stub shim.ChaincodeStubInterface) ([]byte, error) {
-	// 	fmt.Println("getAllTxnGoods is running ")
+	func (t *LoyaltyChaincode) getAllTxnGoods(stub shim.ChaincodeStubInterface) ([]byte, error) {
+		fmt.Println("getAllTxnGoods is running ")
 
-	// 	var txns []TxnGoods
+		var txns []TxnGoods
 
-	// 	// Get list of all the keys - TxnGoods
-	// 	keysBytes, err := stub.GetState("TxnGoods")
-	// 	if err != nil {
-	// 		fmt.Println("Error retrieving TxnGoods keys")
-	// 		return nil, errors.New("Error retrieving TxnGoods keys")
-	// 	}
-	// 	var keys []string
-	// 	err = json.Unmarshal(keysBytes, &keys)
-	// 	if err != nil {
-	// 		fmt.Println("Error unmarshalling TxnGoods key")
-	// 		return nil, errors.New("Error unmarshalling TxnGoods keys")
-	// 	}
+		// Get list of all the keys - TxnGoods
+		keysBytes, err := stub.GetState("TxnGoods")
+		if err != nil {
+			fmt.Println("Error retrieving TxnGoods keys")
+			return shim.Error("Error retrieving TxnGoods keys")
+		}
+		var keys []string
+		err = json.Unmarshal(keysBytes, &keys)
+		if err != nil {
+			fmt.Println("Error unmarshalling TxnGoods key")
+			return shim.Error("Error unmarshalling TxnGoods keys")
+		}
 
-	// 	// Get each txn from "TxnGoods" keys
-	// 	for _, value := range keys {
-	// 		bytes, err := stub.GetState(value)
+		// Get each txn from "TxnGoods" keys
+		for _, value := range keys {
+			bytes, err := stub.GetState(value)
 
-	// 		var txn TxnGoods
-	// 		err = json.Unmarshal(bytes, &txn)
-	// 		if err != nil {
-	// 			fmt.Println("Error retrieving txn " + value)
-	// 			return nil, errors.New("Error retrieving txn " + value)
-	// 		}
+			var txn TxnGoods
+			err = json.Unmarshal(bytes, &txn)
+			if err != nil {
+				fmt.Println("Error retrieving txn " + value)
+				return shim.Error("Error retrieving txn " + value)
+			}
 
-	// 		fmt.Println("Appending txn goods details " + value)
-	// 		txns = append(txns, txn)
-	// 	}
+			fmt.Println("Appending txn goods details " + value)
+			txns = append(txns, txn)
+		}
 
-	// 	bytes, err := json.Marshal(txns)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling txns TxnGoods")
-	// 		return nil, errors.New("Error marshaling txns TxnGoods")
-	// 	}
-	// 	return bytes, nil
-	// }
+		bytes, err := json.Marshal(txns)
+		if err != nil {
+			fmt.Println("Error marshaling txns TxnGoods")
+			return shim.Error("Error marshaling txns TxnGoods")
+		}
+		return bytes, nil
+	}
 
-	// func (t *LoyaltyChaincode) getAllTxnEncash(stub shim.ChaincodeStubInterface) ([]byte, error) {
-	// 	fmt.Println("getAllTxnEncash is running ")
+	func (t *LoyaltyChaincode) getAllTxnEncash(stub shim.ChaincodeStubInterface) ([]byte, error) {
+		fmt.Println("getAllTxnEncash is running ")
 
-	// 	var txns []TxnEncash
+		var txns []TxnEncash
 
-	// 	// Get list of all the keys - TxnGoods
-	// 	keysBytes, err := stub.GetState("TxnEncash")
-	// 	if err != nil {
-	// 		fmt.Println("Error retrieving TxnEncash keys")
-	// 		return nil, errors.New("Error retrieving TxnEncash keys")
-	// 	}
-	// 	var keys []string
-	// 	err = json.Unmarshal(keysBytes, &keys)
-	// 	if err != nil {
-	// 		fmt.Println("Error unmarshalling TxnEncash key")
-	// 		return nil, errors.New("Error unmarshalling TxnEncash keys")
-	// 	}
+		// Get list of all the keys - TxnGoods
+		keysBytes, err := stub.GetState("TxnEncash")
+		if err != nil {
+			fmt.Println("Error retrieving TxnEncash keys")
+			return shim.Error("Error retrieving TxnEncash keys")
+		}
+		var keys []string
+		err = json.Unmarshal(keysBytes, &keys)
+		if err != nil {
+			fmt.Println("Error unmarshalling TxnEncash key")
+			return shim.Error("Error unmarshalling TxnEncash keys")
+		}
 
-	// 	// Get each txn from "TxnGoods" keys
-	// 	for _, value := range keys {
-	// 		bytes, err := stub.GetState(value)
+		// Get each txn from "TxnGoods" keys
+		for _, value := range keys {
+			bytes, err := stub.GetState(value)
 
-	// 		var txn TxnEncash
-	// 		err = json.Unmarshal(bytes, &txn)
-	// 		if err != nil {
-	// 			fmt.Println("Error retrieving txn " + value)
-	// 			return nil, errors.New("Error retrieving txn " + value)
-	// 		}
+			var txn TxnEncash
+			err = json.Unmarshal(bytes, &txn)
+			if err != nil {
+				fmt.Println("Error retrieving txn " + value)
+				return shim.Error("Error retrieving txn " + value)
+			}
 
-	// 		fmt.Println("Appending txn encash details " + value)
-	// 		txns = append(txns, txn)
-	// 	}
+			fmt.Println("Appending txn encash details " + value)
+			txns = append(txns, txn)
+		}
 
-	// 	bytes, err := json.Marshal(txns)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling txns TxnEncash")
-	// 		return nil, errors.New("Error marshaling txns TxnEncash")
-	// 	}
-	// 	return bytes, nil
-	// }
-	// func (t *LoyaltyChaincode) appendKey(stub shim.ChaincodeStubInterface, primeKey string, key string) ([]byte, error) {
-	// 	fmt.Println("appendKey is running " + primeKey + " " + key)
+		bytes, err := json.Marshal(txns)
+		if err != nil {
+			fmt.Println("Error marshaling txns TxnEncash")
+			return shim.Error("Error marshaling txns TxnEncash")
+		}
+		return bytes, nil
+	}
+	func (t *LoyaltyChaincode) appendKey(stub shim.ChaincodeStubInterface, primeKey string, key string) ([]byte, error) {
+		fmt.Println("appendKey is running " + primeKey + " " + key)
 
-	// 	bytes, err := stub.GetState(primeKey)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	var keys []string
-	// 	err = json.Unmarshal(bytes, &keys)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	keys = append(keys, key)
-	// 	bytes, err = json.Marshal(keys)
-	// 	if err != nil {
-	// 		fmt.Println("Error marshaling " + primeKey)
-	// 		return nil, errors.New("Error marshaling keys" + primeKey)
-	// 	}
-	// 	err = stub.PutState(primeKey, bytes)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	return nil, nil
-	// }
-
+		bytes, err := stub.GetState(primeKey)
+		if err != nil {
+			return nil, err
+		}
+		var keys []string
+		err = json.Unmarshal(bytes, &keys)
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
+		bytes, err = json.Marshal(keys)
+		if err != nil {
+			fmt.Println("Error marshaling " + primeKey)
+			return shim.Error("Error marshaling keys" + primeKey)
+		}
+		err = stub.PutState(primeKey, bytes)
+		if err != nil {
+			return nil, err
+		}
+		return shim.Success(nil)
+	}
