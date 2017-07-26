@@ -15,11 +15,9 @@
 
 	import (
 		"encoding/json"
-		"errors"
 		"fmt"
 		"strconv"
-		"strings"
-		"bytes"
+		s "strings"
 		"github.com/hyperledger/fabric/core/chaincode/shim"
 		"github.com/hyperledger/fabric/protos/peer"
 		)
@@ -216,7 +214,7 @@
 	}
 
 	//Query is our entry point for queries
-	func (t *LoyaltyChaincode) Query(stub shim.ChaincodeStubInterface, function string) ([]byte, error) {
+	func (t *LoyaltyChaincode) Query(stub shim.ChaincodeStubInterface, function string) peer.Response {
 		function, args := stub.GetFunctionAndParameters()
 		fmt.Println("query is running " + function)
 
@@ -238,7 +236,7 @@
 	}
 
 	 // write - invoke function to write key/value pair
-	 func (t *LoyaltyChaincode) write(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	 func (t *LoyaltyChaincode) write(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		 fmt.Println("running write()")
 		 if len(args) != 4 {
 			 return shim.Error("Incorrect number of arguments. expecting 4")
@@ -265,14 +263,14 @@
 		err = stub.PutState(name, bytes)
 		if err != nil {
 			fmt.Println("Error writing state")
-			return shim.Error(nil)
+			return shim.Error("Error writing state")
 		}
 
 		return shim.Success(nil)
 	}
 
 	// read - query function to read key/value pair
-	func (t *LoyaltyChaincode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	func (t *LoyaltyChaincode) read(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		fmt.Println("read() is running")
 
 		if len(args) != 1 {
@@ -300,7 +298,7 @@
 		return shim.Success(bytes)
 	}
 
-	func (t *LoyaltyChaincode) buyGoods(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	func (t *LoyaltyChaincode) buyGoods(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 		fmt.Println("buyGoods is running ")
 
@@ -422,7 +420,7 @@
 		return shim.Success(nil)
 	}
 
-	func (t *LoyaltyChaincode) add(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	func (t *LoyaltyChaincode) add(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 		fmt.Println("add is running ")
 
@@ -482,7 +480,7 @@
 		return shim.Success(nil)
 	}
 
-	func (t *LoyaltyChaincode) encashMerchant(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	func (t *LoyaltyChaincode) encashMerchant(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 		fmt.Println("encashMerchant is running ")
 
@@ -521,7 +519,7 @@
 		return t.appendKey(stub, "TxnEncash", key)
 	}
 
-	func (t *LoyaltyChaincode) approve(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	func (t *LoyaltyChaincode) approve(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 		fmt.Println("approve is running ")
 
@@ -617,7 +615,7 @@
 		return shim.Success(nil)
 	}
 
-	func (t *LoyaltyChaincode) addProduct(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	func (t *LoyaltyChaincode) addProduct(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		fmt.Println("adding product information")
 		
 		if len(args) != 5 {
@@ -669,7 +667,7 @@
 		return shim.Success(nil)
 	}
 
-	func (t *LoyaltyChaincode) getAllProducts(stub shim.ChaincodeStubInterface) ([]byte, error) {
+	func (t *LoyaltyChaincode) getAllProducts(stub shim.ChaincodeStubInterface) peer.Response {
 
 		fmt.Println("getAllProducts is running ")
 
@@ -711,7 +709,7 @@
 		return shim.Success(bytes)
 	}
 
-	func (t *LoyaltyChaincode) putTxnTopup(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	func (t *LoyaltyChaincode) putTxnTopup(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		fmt.Println("putTxnTopup is running ")
 
 		if len(args) != 5 {
@@ -740,7 +738,7 @@
 		return t.appendKey(stub, "TxnTopup", txn.ID)
 	}
 
-	func (t *LoyaltyChaincode) getAllTxnTopup(stub shim.ChaincodeStubInterface) ([]byte, error) {
+	func (t *LoyaltyChaincode) getAllTxnTopup(stub shim.ChaincodeStubInterface) peer.Response {
 		fmt.Println("getAllTxnTopup is running ")
 
 		var txns []TxnTopup
@@ -778,10 +776,10 @@
 			fmt.Println("Error marshaling txns topup")
 			return shim.Error("Error marshaling txns topup")
 		}
-		return shim.Error(bytes)
+		return shim.Success(bytes)
 	}
 
-	func (t *LoyaltyChaincode) putTxnGoods(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	func (t *LoyaltyChaincode) putTxnGoods(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		fmt.Println("putTxnGoods is running ")
 
 		if len(args) != 8 {
@@ -811,7 +809,7 @@
 		return t.appendKey(stub, "TxnGoods", txn.ID)
 	}
 
-	func (t *LoyaltyChaincode) getAllTxnGoods(stub shim.ChaincodeStubInterface) ([]byte, error) {
+	func (t *LoyaltyChaincode) getAllTxnGoods(stub shim.ChaincodeStubInterface) peer.Response {
 		fmt.Println("getAllTxnGoods is running ")
 
 		var txns []TxnGoods
@@ -849,10 +847,10 @@
 			fmt.Println("Error marshaling txns TxnGoods")
 			return shim.Error("Error marshaling txns TxnGoods")
 		}
-		return shim.Error(bytes)
+		return shim.Success(bytes)
 	}
 
-	func (t *LoyaltyChaincode) getAllTxnEncash(stub shim.ChaincodeStubInterface) ([]byte, error) {
+	func (t *LoyaltyChaincode) getAllTxnEncash(stub shim.ChaincodeStubInterface) peer.Response {
 		fmt.Println("getAllTxnEncash is running ")
 
 		var txns []TxnEncash
@@ -890,9 +888,9 @@
 			fmt.Println("Error marshaling txns TxnEncash")
 			return shim.Error("Error marshaling txns TxnEncash")
 		}
-		return shim.Error(bytes)
+		return shim.Success(bytes)
 	}
-	func (t *LoyaltyChaincode) appendKey(stub shim.ChaincodeStubInterface, primeKey string, key string) ([]byte, error) {
+	func (t *LoyaltyChaincode) appendKey(stub shim.ChaincodeStubInterface, primeKey string, key string) peer.Response {
 		fmt.Println("appendKey is running " + primeKey + " " + key)
 
 		bytes, err := stub.GetState(primeKey)
