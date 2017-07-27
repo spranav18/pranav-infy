@@ -62,6 +62,17 @@
 		Asset    string `json:"asset"`
 	}
 
+	//TxnTransfer - User transactions for transfer of points or balance
+	type TxnTransfer struct {
+		Sender   string `json:"sender"`
+		Receiver string `json:"receiver"`
+		Remarks  string `json:"remarks"`
+		ID       string `json:"id"`
+		Time     string `json:"time"`
+		Value    string `json:"value"`
+		Asset    string `json:"asset"`
+	}
+
 	//TxnEncash - details of requests from merchant to encash points
 	type TxnEncash struct {
 		Key       string `json:"key"`
@@ -202,24 +213,15 @@
 			return t.buyGoods(stub, args)
 		} else if function == "add" {
 			return t.add(stub, args)
+		} else if function == "transfer" {
+			return t.transfer(stub, args)
 		} else if function == "encashMerchant" {
 			return t.encashMerchant(stub, args)
 		} else if function == "approve" {
 			return t.approve(stub, args)
-		}
-
-		fmt.Println("invoke did not find func: " + function)
-
-		return shim.Error("Received unknown function invocation: " + function)
-	}
-
-	//Query is our entry point for queries
-	func (t *LoyaltyChaincode) Query(stub shim.ChaincodeStubInterface, function string) peer.Response {
-		function, args := stub.GetFunctionAndParameters()
-		fmt.Println("query is running " + function)
-
-		// Handle different functions
-		if function == "read" {
+		}else if function == "addProduct" {
+	 		return t.addProduct(stub,args)
+	 	}else if function == "read" {
 			return t.read(stub, args)
 		} else if function == "getAllProducts" {
 			return t.getAllProducts(stub)
@@ -230,10 +232,32 @@
 		} else if function == "getAllTxnEncash" {
 	 		return t.getAllTxnEncash(stub)
 	 	}
-		fmt.Println("query did not find func: " + function)
+		fmt.Println("invoke did not find func: " + function)
 
-		return shim.Error("Received unknown function query: " + function)
+		return shim.Error("Received unknown function invocation: " + function)
 	}
+
+	// //Query is our entry point for queries
+	// func (t *LoyaltyChaincode) Query(stub shim.ChaincodeStubInterface) peer.Response {
+	// 	function, args := stub.GetFunctionAndParameters()
+	// 	fmt.Println("query is running " + function)
+
+	// 	// Handle different functions
+	// 	if function == "read" {
+	// 		return t.read(stub, args)
+	// 	} else if function == "getAllProducts" {
+	// 		return t.getAllProducts(stub)
+	// 	} else if function == "getAllTxnTopup" {
+	// 		return t.getAllTxnTopup(stub)
+	// 	} else if function == "getAllTxnGoods" {
+	//  		return t.getAllTxnGoods(stub)
+	// 	} else if function == "getAllTxnEncash" {
+	//  		return t.getAllTxnEncash(stub)
+	//  	}
+	// 	fmt.Println("query did not find func: " + function)
+
+	// 	return shim.Error("Received unknown function query: " + function)
+	// }
 
 	 // write - invoke function to write key/value pair
 	 func (t *LoyaltyChaincode) write(stub shim.ChaincodeStubInterface, args []string) peer.Response {
@@ -479,7 +503,90 @@
 
 		return shim.Success(nil)
 	}
+	
+	func (t *LoyaltyChaincode) transfer(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	fmt.Println("transfer is running ")
 
+	if len(args) != 5 {
+		return shim.Error("Incorrect Number of arguments.Expecting 5 for transfer")
+	}
+
+	key := args[0]   // fromEntity ex: customer
+	key2 := args[1]  // toEntity ex: merchant
+	asset := args[2] // points or balance
+
+	// GET the state of fromEntity from the ledger
+	bytes, err := stub.GetState(key)
+	if err != nil {
+		return shim.Error("Failed to get state of " + key)
+	}
+
+	fromEntity := Entity{}
+	err = json.Unmarshal(bytes, &fromEntity)
+	if err != nil {
+		fmt.Println("Error Unmarshaling entity Bytes")
+		return shim.Error("Error Unmarshaling entity Bytes")
+	}
+
+	// GET the state of toEntity from the ledger
+	bytes, err = stub.GetState(key2)
+	if err != nil {
+		return shim.Error("Failed to get state of " + key)
+	}
+
+	toEntity := Entity{}
+	err = json.Unmarshal(bytes, &toEntity)
+	if err != nil {
+		fmt.Println("Error Unmarshaling entity Bytes")
+		return shim.Error("Error Unmarshaling entity Bytes")
+	}
+
+	// Perform transfer of assests
+	if asset == "points" {
+		amt, err := strconv.Atoi(args[3])
+		if err == nil {
+			fromEntity.Points = fromEntity.Points - amt
+			toEntity.Points = toEntity.Points + amt
+			fmt.Println("from entity Points = ", fromEntity.Points)
+		}
+	} else {
+		amt, err := strconv.ParseFloat(args[3], 64)
+		if err == nil {
+			fromEntity.Balance = fromEntity.Balance - amt
+			toEntity.Balance = toEntity.Balance + amt
+			fmt.Println("from entity Points = ", fromEntity.Points)
+		}
+	}
+
+	// Write the state back to the ledger
+	bytes, err = json.Marshal(fromEntity)
+	if err != nil {
+		fmt.Println("Error marshaling fromEntity")
+		return shim.Error("Error marshaling fromEntity")
+	}
+	err = stub.PutState(key, bytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	bytes, err = json.Marshal(toEntity)
+	if err != nil {
+		fmt.Println("Error marshaling toEntity")
+		return shim.Error("Error marshaling toEntity")
+	}
+	err = stub.PutState(key2, bytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	ID := stub.GetTxID()
+	blockTime, err := stub.GetTxTimestamp()
+	args = append(args, ID)
+	args = append(args, blockTime.String())
+	t.putTxnTransfer(stub, args)
+
+	return shim.Success(nil)
+}
 	func (t *LoyaltyChaincode) encashMerchant(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 		fmt.Println("encashMerchant is running ")
@@ -520,34 +627,21 @@
 	}
 
 	func (t *LoyaltyChaincode) approve(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-
-		fmt.Println("approve is running ")
-
-		if len(args) != 1 {
-			return shim.Error("Incorrect Number of arguments.Expecting 1 for approve")
+		if len(args) != 4 {
+			return shim.Error("Incorrect Number of arguments.Expecting 3 for encashMerchant")
 		}
+
+		points, err := strconv.Atoi(args[2])
+		balance, err := strconv.Atoi(args[3]) //ParseFloat(args[3], 64)
 
 		bytes, err := stub.GetState(args[0])
 		if err != nil {
-			return shim.Error("Failed to get state of encash key")
+			return shim.Error("Failed to get state of " + args[0])
 		}
 		if bytes == nil {
 			return shim.Error("Entity not found")
-		}
-		txn := TxnEncash{}
-		err = json.Unmarshal(bytes, &txn)
-		if err != nil {
-			fmt.Println("Error Unmarshaling TxnEncash")
-			return shim.Error("Error Unmarshaling TxnEncash")
 		}
 
-		bytes, err = stub.GetState(txn.Initiator)
-		if err != nil {
-			return shim.Error("Failed to get state of " + txn.Initiator)
-		}
-		if bytes == nil {
-			return shim.Error("Entity not found")
-		}
 		merchant := Entity{}
 		err = json.Unmarshal(bytes, &merchant)
 		if err != nil {
@@ -555,10 +649,11 @@
 			return shim.Error("Error Unmarshaling encash merchant")
 		}
 
-		bytes, err = stub.GetState(txn.Bank)
+		bytes, err = stub.GetState(args[1])
 		if err != nil {
-			return shim.Error("Failed to get state of " + txn.Bank)
+			return shim.Error("Failed to get state of " + args[1])
 		}
+
 		if bytes == nil {
 			return shim.Error("Entity not found")
 		}
@@ -570,10 +665,10 @@
 		}
 
 		// Perform encashment
-		bank.Points = bank.Points + txn.Points
-		merchant.Points = merchant.Points - txn.Points
-		bank.Balance = bank.Balance - float64(txn.Amount)
-		merchant.Balance = merchant.Balance + float64(txn.Amount)
+		bank.Points = bank.Points + points
+		merchant.Points = merchant.Points - points
+		bank.Balance = bank.Balance - float64(balance)
+		merchant.Balance = merchant.Balance + float64(balance)
 
 		// Write the merchant/entity1 state back to the ledger
 		bytes, err = json.Marshal(merchant)
@@ -581,7 +676,7 @@
 			fmt.Println("Error marshaling merchant")
 			return shim.Error("Error marshaling merchant")
 		}
-		err = stub.PutState(txn.Initiator, bytes)
+		err = stub.PutState(args[0], bytes)
 		if err != nil {
 			return shim.Error(err.Error())
 		}
@@ -592,16 +687,26 @@
 			fmt.Println("Error marshaling bank")
 			return shim.Error("Error marshaling bank")
 		}
-		err = stub.PutState(txn.Bank, bytes)
+
+		err = stub.PutState(args[1], bytes)
 		if err != nil {
 			return shim.Error(err.Error())
 		}
 
 		blockTime, err := stub.GetTxTimestamp()
-		txn.Time = blockTime.String()
-		txn.ID = stub.GetTxID()
-		txn.Remarks = "Encashment Completed"
 		// Write the TxnEncash state back to the ledger
+		i++
+		key := "encash" + strconv.Itoa(i)
+		txn := TxnEncash{
+			Key:       key,
+			ID:        stub.GetTxID(),
+			Initiator: args[0],
+			Bank:      args[1],
+			Points:    points,
+			Amount:    balance,
+			Remarks:   "Encashment Completed",
+			Time:      blockTime.String(),
+		}
 		bytes, err = json.Marshal(txn)
 		if err != nil {
 			fmt.Println("Error marshaling TxnGoods")
@@ -612,7 +717,7 @@
 			return shim.Error(err.Error())
 		}
 
-		return shim.Success(nil)
+		return t.appendKey(stub, "TxnEncash", key)
 	}
 
 	func (t *LoyaltyChaincode) addProduct(stub shim.ChaincodeStubInterface, args []string) peer.Response {
@@ -890,6 +995,79 @@
 		}
 		return shim.Success(bytes)
 	}
+
+func (t *LoyaltyChaincode) putTxnTransfer(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	fmt.Println("putTxnTransfer is running ")
+
+	if len(args) != 7 {
+		return shim.Error("Incorrect Number of arguments.Expecting 8 for putTxnTransfer")
+	}
+
+	txn := TxnTransfer{
+		Sender:   args[0],
+		Receiver: args[1],
+		Remarks:  args[4],
+		ID:       args[5],
+		Time:     args[6],
+		Value:    args[3],
+		Asset:    args[2],
+	}
+
+	bytes, err := json.Marshal(txn)
+	if err != nil {
+		fmt.Println("Error marshaling TxnTransfer")
+		return shim.Error("Error marshaling TxnTransfer")
+	}
+
+	err = stub.PutState(txn.ID, bytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return t.appendKey(stub, "TxnTransfer", txn.ID)
+}
+
+func (t *LoyaltyChaincode) getAllTxnTransfer(stub shim.ChaincodeStubInterface) peer.Response {
+	fmt.Println("getAllTxnTransfer is running ")
+
+	var txns []TxnTransfer
+
+	// Get list of all the keys - TxnGoods
+	keysBytes, err := stub.GetState("TxnTransfer")
+	if err != nil {
+		fmt.Println("Error retrieving TxnTransfer keys")
+		return shim.Error("Error retrieving TxnTransfer keys")
+	}
+	var keys []string
+	err = json.Unmarshal(keysBytes, &keys)
+	if err != nil {
+		fmt.Println("Error unmarshalling TxnTransfer key")
+		return shim.Error("Error unmarshalling TxnTransfer keys")
+	}
+
+	// Get each txn from "TxnTransfer" keys
+	for _, value := range keys {
+		bytes, err := stub.GetState(value)
+
+		var txn TxnTransfer
+		err = json.Unmarshal(bytes, &txn)
+		if err != nil {
+			fmt.Println("Error retrieving txn " + value)
+			return shim.Error("Error retrieving txn " + value)
+		}
+
+		fmt.Println("Appending txn goods details " + value)
+		txns = append(txns, txn)
+	}
+
+	bytes, err := json.Marshal(txns)
+	if err != nil {
+		fmt.Println("Error marshaling txns TxnTransfer")
+		return shim.Error("Error marshaling txns TxnTransfer")
+	}
+	return shim.Success(bytes)
+}
+
 	func (t *LoyaltyChaincode) appendKey(stub shim.ChaincodeStubInterface, primeKey string, key string) peer.Response {
 		fmt.Println("appendKey is running " + primeKey + " " + key)
 
