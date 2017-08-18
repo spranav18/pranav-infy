@@ -102,10 +102,11 @@
 	}
 
 	//Initializes
-	func (t *LoyaltyChaincode) InitLedger(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	
+		func (t *LoyaltyChaincode) InitLedger(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		var err error
-		if len(args) != 3 {
-			return shim.Error("Incorrect number of arguments. Expecting 3")
+        if len(args) != 3 {
+            return shim.Error("Incorrect number of arguments. Expecting 3")
 		}
 
 		key1 := args[0] //customer
