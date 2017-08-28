@@ -192,11 +192,11 @@
 		}
 
 		fmt.Println("Initialization complete")
-
-		t.addProduct(stub, []string{"Speakers", "2000", "200", key2, "100"})
-		t.addProduct(stub, []string{"Headphones", "3000", "300",  key2, "100"})
-		t.addProduct(stub, []string{"Mobile", "4000", "400", key2, "100"})
-		t.addProduct(stub, []string{"BagPack", "1000", "100", key2, "100"})
+		
+		t.addProduct(stub, []string{"Café Frappe", "495", "4.95", key2, "500"})
+		t.addProduct(stub, []string{"Café Latte", "365", "3.65", key2, "500"})
+		t.addProduct(stub, []string{"Café Mocha", "525", "5.25", key2, "500"})
+		t.addProduct(stub, []string{"Cappuccino", "295", "2.95", key2, "500"})
 
 		return shim.Success(nil)
 	}
